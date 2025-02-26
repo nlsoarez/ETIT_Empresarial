@@ -3,102 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de SLA</title>
+    <title>Consulta SLA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-        .container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: auto;
-        }
-        .logo {
-            width: 100px;
-            margin-bottom: 15px;
-        }
-        h2 {
-            color: #333;
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            background: #dc3545;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #b02a37;
-        }
-        table {
-            width: 100%;
-            margin-top: 15px;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background: #dc3545;
-            color: white;
-        }
-        .ganho {
-            background-color: #28a745;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .perda {
-            background-color: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { padding: 10px; margin: 10px; }
+        table { width: 80%; margin: auto; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        .ganho { background-color: green; color: white; }
+        .perda { background-color: red; color: white; }
+        .botao { background-color: red; color: white; border: none; padding: 10px 20px; cursor: pointer; }
+        img { width: 150px; display: block; margin: auto; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro" class="logo">
-        <h2>Portal de Consulta de SLA</h2>
-        <input type="file" id="upload" accept=".xlsx">
-        <br>
-        <input type="text" id="nome" placeholder="Digite o nome">
-        <button onclick="consultarSLA()">Consultar</button>
-        <button onclick="limparConsulta()">Limpar</button>
-        <br>
-        <h3>Resultados:</h3>
-        <p id="resumo"></p>
-        <table id="tabelaResultados">
-            <thead>
-                <tr>
-                    <th>RAL/REC</th>
-                    <th>Tipo</th>
-                    <th>Tempo</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
+    <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
+    <h2>Consulta SLA</h2>
+    <input type="file" id="upload" accept=".xlsx">
+    <br>
+    <input type="text" id="login" placeholder="Digite o login">
+    <button class="botao" onclick="consultarSLA()">Consultar</button>
+    <br>
+    <h3>Resultados:</h3>
+    <p id="resumo"></p>
+    <table id="tabelaResultados">
+        <thead>
+            <tr>
+                <th>RAL/REC</th>
+                <th>Nome</th>
+                <th>Volume</th>
+                <th>SLA</th>
+                <th>Tempo Médio</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    
     <script>
         let dadosPlanilha = [];
+        const logins = {
+            "N0189105": "Igor Marcelino de Marins",
+            "N5713690": "Gabriela Tavares da Silva",
+            "N5922887": "Romulo Barbosa Nicolae",
+            "F201714": "Fernanda Mesquita de Freitas",
+            "N0125317": "Roberto Silva do Nascimento",
+            "N5819183": "Rodrigo Pires Bernardino",
+            "N5926003": "Suellen Hernandez da Silva",
+            "N5932064": "Monica da Silva Rodrigues"
+        };
+        
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -114,60 +67,50 @@
         });
 
         function consultarSLA() {
-            const nome = document.getElementById('nome').value.trim();
-            if (!nome) {
-                alert("Digite um nome!");
+            const login = document.getElementById('login').value.trim();
+            if (!login || !logins[login]) {
+                alert("Digite um login válido!");
                 return;
             }
-
-            let ganhos = [];
-            let perdas = [];
-            let tempoGanhos = [];
-            let tempoPerdas = [];
-
+            
+            const nome = logins[login];
+            let tempoTotalGanho = 0, tempoTotalPerdido = 0;
+            let qtdGanho = 0, qtdPerdido = 0;
+            let resultados = [];
+            
             dadosPlanilha.forEach(row => {
                 if (row[1] === nome) {
-                    let tipo = row[0]; 
-                    let sla = row[3];
-                    let tempo = parseFloat(row[4]);
-
-                    if (sla === 11) {
-                        ganhos.push({ tipo, tempo });
-                        tempoGanhos.push(tempo);
-                    } else if (sla === 10) {
-                        perdas.push({ tipo, tempo });
-                        tempoPerdas.push(tempo);
+                    let status = (row[3] === 11) ? "Ganho" : (row[3] === 10) ? "Perda" : "-";
+                    
+                    if (status === "Ganho") {
+                        qtdGanho++;
+                        tempoTotalGanho += row[4];
+                    } else if (status === "Perda") {
+                        qtdPerdido++;
+                        tempoTotalPerdido += row[4];
                     }
+
+                    resultados.push({ ralRec: row[0], nome: row[1], volume: row[2], status, tempo: row[4] });
                 }
             });
 
-            let mediaGanhos = tempoGanhos.length ? (tempoGanhos.reduce((a, b) => a + b, 0) / tempoGanhos.length).toFixed(2) : "N/A";
-            let mediaPerdas = tempoPerdas.length ? (tempoPerdas.reduce((a, b) => a + b, 0) / tempoPerdas.length).toFixed(2) : "N/A";
-
-            document.getElementById('resumo').innerText = `Ganhos: ${ganhos.length} (Média: ${mediaGanhos}) | Perdas: ${perdas.length} (Média: ${mediaPerdas})`;
-
+            const tempoMedioGanho = qtdGanho ? (tempoTotalGanho / qtdGanho).toFixed(2) : "-";
+            const tempoMedioPerdido = qtdPerdido ? (tempoTotalPerdido / qtdPerdido).toFixed(2) : "-";
+            
+            document.getElementById('resumo').innerText = `Ganho: ${qtdGanho} (Tempo Médio: ${tempoMedioGanho}), Perda: ${qtdPerdido} (Tempo Médio: ${tempoMedioPerdido})`;
+            
             const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
             tabela.innerHTML = "";
-
-            ganhos.forEach(item => {
+            resultados.forEach(res => {
                 let row = tabela.insertRow();
-                row.insertCell(0).innerText = item.tipo;
-                row.insertCell(1).innerHTML = '<span class="ganho">Ganho</span>';
-                row.insertCell(2).innerText = item.tempo;
+                row.insertCell(0).innerText = res.ralRec;
+                row.insertCell(1).innerText = res.nome;
+                row.insertCell(2).innerText = res.volume;
+                let statusCell = row.insertCell(3);
+                statusCell.innerText = res.status;
+                statusCell.classList.add(res.status === "Ganho" ? "ganho" : "perda");
+                row.insertCell(4).innerText = res.tempo;
             });
-
-            perdas.forEach(item => {
-                let row = tabela.insertRow();
-                row.insertCell(0).innerText = item.tipo;
-                row.insertCell(1).innerHTML = '<span class="perda">Perda</span>';
-                row.insertCell(2).innerText = item.tempo;
-            });
-        }
-
-        function limparConsulta() {
-            document.getElementById('nome').value = "";
-            document.getElementById('resumo').innerText = "";
-            document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0].innerHTML = "";
         }
     </script>
 </body>
