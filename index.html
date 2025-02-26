@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de SLA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        .logo {
+            width: 100px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            color: #333;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #b02a37;
+        }
+        table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #dc3545;
+            color: white;
+        }
+        .ganho {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .perda {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro" class="logo">
+        <h2>Portal de Consulta de SLA</h2>
+        <input type="file" id="upload" accept=".xlsx">
+        <br>
+        <input type="text" id="nome" placeholder="Digite o nome">
+        <button onclick="consultarSLA()">Consultar</button>
+        <button onclick="limparConsulta()">Limpar</button>
+        <br>
+        <h3>Resultados:</h3>
+        <p id="resumo"></p>
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>RAL/REC</th>
+                    <th>Tipo</th>
+                    <th>Tempo</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let dadosPlanilha = [];
+        document.getElementById('upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                alert("Planilha carregada com sucesso!");
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function consultarSLA() {
+            const nome = document.getElementById('nome').value.trim();
+            if (!nome) {
+                alert("Digite um nome!");
+                return;
+            }
+
+            let ganhos = [];
+            let perdas = [];
+            let tempoGanhos = [];
+            let tempoPerdas = [];
+
+            dadosPlanilha.forEach(row => {
+                if (row[1] === nome) {
+                    let tipo = row[0]; 
+                    let sla = row[3];
+                    let tempo = parseFloat(row[4]);
+
+                    if (sla === 11) {
+                        ganhos.push({ tipo, tempo });
+                        tempoGanhos.push(tempo);
+                    } else if (sla === 10) {
+                        perdas.push({ tipo, tempo });
+                        tempoPerdas.push(tempo);
+                    }
+                }
+            });
+
+            let mediaGanhos = tempoGanhos.length ? (tempoGanhos.reduce((a, b) => a + b, 0) / tempoGanhos.length).toFixed(2) : "N/A";
+            let mediaPerdas = tempoPerdas.length ? (tempoPerdas.reduce((a, b) => a + b, 0) / tempoPerdas.length).toFixed(2) : "N/A";
+
+            document.getElementById('resumo').innerText = `Ganhos: ${ganhos.length} (Média: ${mediaGanhos}) | Perdas: ${perdas.length} (Média: ${mediaPerdas})`;
+
+            const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
+            tabela.innerHTML = "";
+
+            ganhos.forEach(item => {
+                let row = tabela.insertRow();
+                row.insertCell(0).innerText = item.tipo;
+                row.insertCell(1).innerHTML = '<span class="ganho">Ganho</span>';
+                row.insertCell(2).innerText = item.tempo;
+            });
+
+            perdas.forEach(item => {
+                let row = tabela.insertRow();
+                row.insertCell(0).innerText = item.tipo;
+                row.insertCell(1).innerHTML = '<span class="perda">Perda</span>';
+                row.insertCell(2).innerText = item.tempo;
+            });
+        }
+
+        function limparConsulta() {
+            document.getElementById('nome').value = "";
+            document.getElementById('resumo').innerText = "";
+            document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0].innerHTML = "";
+        }
+    </script>
+</body>
+</html>
