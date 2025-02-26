@@ -1,76 +1,94 @@
-import pandas as pd
-import dash
-from dash import dcc, html, Input, Output, dash_table
-import dash_bootstrap_components as dbc
-import base64
-import io
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta SLA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
+        .logo { width: 150px; margin-bottom: 15px; }
+        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        input, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
+        .botao { background-color: #d52b1e; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .botao:hover { background-color: #b2221a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #d52b1e; color: white; }
+        .ganho { background-color: green; color: white; }
+        .perda { background-color: red; color: white; }
+        @media (max-width: 600px) {
+            .input-group { flex-direction: column; gap: 5px; }
+            input, button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img class="logo" src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
+        <h2>Consulta de SLA</h2>
+        <div class="input-group">
+            <input type="file" id="upload" accept=".xlsx">
+        </div>
+        <div class="input-group">
+            <input type="text" id="login" placeholder="Digite o login">
+            <button class="botao" onclick="consultarSLA()">Consultar</button>
+        </div>
+        <h3>Resultados:</h3>
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>RAL/REC</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
-# Inicialização do app com tema profissional
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+    <script>
+        let dadosPlanilha = [];
+        document.getElementById('upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                alert("Planilha carregada com sucesso!");
+            };
+            reader.readAsArrayBuffer(file);
+        });
 
-# Layout do app
-app.layout = dbc.Container([
-    html.H2("Consulta de SLA", className="text-center mt-4"),
-    
-    dbc.Row([
-        dbc.Col(dcc.Upload(
-            id='upload-data',
-            children=html.Button('Escolher arquivo', className='btn btn-secondary'),
-            multiple=False
-        ), width=4),
-    ], className="mb-3 justify-content-center"),
-    
-    dbc.Row([
-        dbc.Col(dcc.Input(id='input-login', type='text', placeholder='Digite o login', className="form-control"), width=3),
-        dbc.Col(html.Button('Consultar', id='btn-consultar', className='btn btn-danger', n_clicks=0), width=2)
-    ], className="mb-4 justify-content-center"),
-    
-    html.H4("Resultados:", className="mt-3"),
-    html.Div(id='table-container')
-])
+        function consultarSLA() {
+            const login = document.getElementById('login').value.trim();
+            if (!login) {
+                alert("Digite um login!");
+                return;
+            }
 
-# Callback para processar os dados
-@app.callback(
-    Output('table-container', 'children'),
-    Input('upload-data', 'contents'),
-    Input('input-login', 'value'),
-    Input('btn-consultar', 'n_clicks')
-)
-def update_table(contents, login, n_clicks):
-    if not contents or not login or n_clicks == 0:
-        return ""
-    
-    # Decodificar o arquivo carregado
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    df = pd.read_excel(io.BytesIO(decoded), header=None)
-    df.columns = ["RAL/REC", "Login", "Volume", "SLA"]
-    
-    # Filtrar pelo login
-    df = df[df["Login"] == login]
-    if df.empty:
-        return html.Div("Nenhum dado encontrado para este login.", className="text-danger")
-    
-    # Definir resultado de SLA
-    df["Resultado"] = df["SLA"].apply(lambda x: "Ganho" if x == 1 else "Perda")
-    
-    # Criar tabela estilizada
-    table = dash_table.DataTable(
-        columns=[
-            {"name": "RAL/REC", "id": "RAL/REC"},
-            {"name": "Resultado", "id": "Resultado"}
-        ],
-        data=df[["RAL/REC", "Resultado"]].to_dict('records'),
-        style_data_conditional=[
-            {"if": {"filter_query": '{Resultado} eq "Ganho"'}, "backgroundColor": "green", "color": "white"},
-            {"if": {"filter_query": '{Resultado} eq "Perda"'}, "backgroundColor": "red", "color": "white"}
-        ],
-        style_table={'overflowX': 'auto'},
-        style_header={"backgroundColor": "#f8f9fa", "fontWeight": "bold"}
-    )
-    
-    return table
+            let resultados = [];
+            dadosPlanilha.forEach(row => {
+                if (row[1] === login) {
+                    let resultado = (row[2] === 1 && row[3] === 1) ? "Ganho" : (row[2] === 1 && row[3] === 0) ? "Perda" : "-";
+                    if (row[2] === 0) return; // Ignorar entradas que começam com 0
+                    resultados.push({ id: row[0], status: resultado });
+                }
+            });
 
-# Rodar o app
-if __name__ == '__main__':
-    app.run_server(debug=True)
+            const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
+            tabela.innerHTML = "";
+            resultados.forEach(res => {
+                let row = tabela.insertRow();
+                row.insertCell(0).innerText = res.id;
+                let statusCell = row.insertCell(1);
+                statusCell.innerText = res.status;
+                statusCell.className = res.status === "Ganho" ? "ganho" : "perda";
+            });
+        }
+    </script>
+</body>
+</html>
