@@ -3,37 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta SLA</title>
+    <title>Consulta de SLA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         input, button { padding: 10px; margin: 10px; }
         table { width: 80%; margin: auto; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        th, td { border: 1px solid black; padding: 8px; }
         .ganho { background-color: green; color: white; }
         .perda { background-color: red; color: white; }
-        .botao { background-color: red; color: white; border: none; padding: 10px 20px; cursor: pointer; }
-        img { width: 150px; display: block; margin: auto; }
     </style>
 </head>
 <body>
-    <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
-    <h2>Consulta SLA</h2>
+    <h2>Portal de Consulta de SLA</h2>
     <input type="file" id="upload" accept=".xlsx">
     <br>
-    <input type="text" id="login" placeholder="Digite o login">
-    <button class="botao" onclick="consultarSLA()">Consultar</button>
+    <input type="text" id="consulta" placeholder="Digite a Matrícula ou Nome">
+    <button onclick="consultarSLA()">Consultar</button>
     <br>
     <h3>Resultados:</h3>
     <p id="resumo"></p>
     <table id="tabelaResultados">
         <thead>
             <tr>
-                <th>RAL/REC</th>
+                <th>Tipo</th>
                 <th>Nome</th>
                 <th>Volume</th>
                 <th>SLA</th>
-                <th>Tempo Médio</th>
+                <th>Tempo</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -42,16 +39,16 @@
     <script>
         let dadosPlanilha = [];
         const logins = {
-            "N0189105": "Igor Marcelino de Marins",
-            "N5713690": "Gabriela Tavares da Silva",
-            "N5922887": "Romulo Barbosa Nicolae",
-            "F201714": "Fernanda Mesquita de Freitas",
-            "N0125317": "Roberto Silva do Nascimento",
-            "N5819183": "Rodrigo Pires Bernardino",
-            "N5926003": "Suellen Hernandez da Silva",
-            "N5932064": "Monica da Silva Rodrigues"
+            "N0189105": "IGOR MARCELINO DE MARINS",
+            "N5713690": "GABRIELA TAVARES DA SILVA",
+            "N5922887": "ROMULO BARBOSA NICOLAE",
+            "F201714": "FERNANDA MESQUITA DE FREITAS",
+            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
+            "N5819183": "RODRIGO PIRES BERNARDINO",
+            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
+            "N5932064": "MONICA DA SILVA RODRIGUES"
         };
-        
+
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -67,48 +64,39 @@
         });
 
         function consultarSLA() {
-            const login = document.getElementById('login').value.trim();
-            if (!login || !logins[login]) {
-                alert("Digite um login válido!");
+            const entrada = document.getElementById('consulta').value.trim().toUpperCase();
+            if (!entrada) {
+                alert("Digite uma Matrícula ou Nome!");
                 return;
             }
-            
-            const nome = logins[login];
-            let tempoTotalGanho = 0, tempoTotalPerdido = 0;
-            let qtdGanho = 0, qtdPerdido = 0;
-            let resultados = [];
-            
-            dadosPlanilha.forEach(row => {
-                if (row[1] === nome) {
-                    let status = (row[3] === 11) ? "Ganho" : (row[3] === 10) ? "Perda" : "-";
-                    
-                    if (status === "Ganho") {
-                        qtdGanho++;
-                        tempoTotalGanho += row[4];
-                    } else if (status === "Perda") {
-                        qtdPerdido++;
-                        tempoTotalPerdido += row[4];
-                    }
 
-                    resultados.push({ ralRec: row[0], nome: row[1], volume: row[2], status, tempo: row[4] });
+            const nomeOuMatricula = logins[entrada] || entrada;
+            let ganhos = 0, perdas = 0, tempoGanho = 0, tempoPerda = 0, countGanho = 0, countPerda = 0;
+            let resultados = [];
+
+            dadosPlanilha.forEach(row => {
+                if (row[1].toUpperCase() === nomeOuMatricula) {
+                    let status = (row[3] === 11) ? "Dentro do SLA" : (row[3] === 10) ? "Fora do SLA" : "-";
+                    if (status === "Dentro do SLA") { ganhos++; tempoGanho += row[4]; countGanho++; }
+                    if (status === "Fora do SLA") { perdas++; tempoPerda += row[4]; countPerda++; }
+                    resultados.push({ tipo: row[0], nome: row[1], volume: row[2], sla: status, tempo: row[4] });
                 }
             });
 
-            const tempoMedioGanho = qtdGanho ? (tempoTotalGanho / qtdGanho).toFixed(2) : "-";
-            const tempoMedioPerdido = qtdPerdido ? (tempoTotalPerdido / qtdPerdido).toFixed(2) : "-";
+            let tempoMedioGanho = (countGanho > 0) ? (tempoGanho / countGanho).toFixed(2) : 0;
+            let tempoMedioPerda = (countPerda > 0) ? (tempoPerda / countPerda).toFixed(2) : 0;
             
-            document.getElementById('resumo').innerText = `Ganho: ${qtdGanho} (Tempo Médio: ${tempoMedioGanho}), Perda: ${qtdPerdido} (Tempo Médio: ${tempoMedioPerdido})`;
-            
+            document.getElementById('resumo').innerText = `Ganhos: ${ganhos}, Perdas: ${perdas}, Tempo Médio Ganho: ${tempoMedioGanho}, Tempo Médio Perda: ${tempoMedioPerda}`;
             const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
             tabela.innerHTML = "";
             resultados.forEach(res => {
                 let row = tabela.insertRow();
-                row.insertCell(0).innerText = res.ralRec;
+                row.insertCell(0).innerText = res.tipo;
                 row.insertCell(1).innerText = res.nome;
                 row.insertCell(2).innerText = res.volume;
-                let statusCell = row.insertCell(3);
-                statusCell.innerText = res.status;
-                statusCell.classList.add(res.status === "Ganho" ? "ganho" : "perda");
+                let cellSLA = row.insertCell(3);
+                cellSLA.innerText = res.sla;
+                cellSLA.className = (res.sla === "Dentro do SLA") ? "ganho" : "perda";
                 row.insertCell(4).innerText = res.tempo;
             });
         }
