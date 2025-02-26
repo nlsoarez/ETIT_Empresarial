@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta SLA</title>
+    <title>Consulta de SLA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
@@ -15,10 +15,10 @@
     </style>
 </head>
 <body>
-    <h2>Portal de Consulta de SLA</h2>
+    <h2>Portal de Consulta SLA</h2>
     <input type="file" id="upload" accept=".xlsx">
     <br>
-    <input type="text" id="consulta" placeholder="Digite o login ou nome">
+    <input type="text" id="login" placeholder="Digite o login">
     <button onclick="consultarSLA()">Consultar</button>
     <br>
     <h3>Resultados:</h3>
@@ -27,9 +27,8 @@
         <thead>
             <tr>
                 <th>RAL/REC</th>
-                <th>Nome</th>
                 <th>Volume</th>
-                <th>SLA</th>
+                <th>SLA Status</th>
                 <th>Tempo</th>
             </tr>
         </thead>
@@ -38,17 +37,6 @@
     
     <script>
         let dadosPlanilha = [];
-        const logins = {
-            "N0189105": "IGOR MARCELINO DE MARINS",
-            "N5713690": "GABRIELA TAVARES DA SILVA",
-            "N5922887": "ROMULO BARBOSA NICOLAE",
-            "F201714": "FERNANDA MESQUITA DE FREITAS",
-            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
-            "N5819183": "RODRIGO PIRES BERNARDINO",
-            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
-            "N5932064": "MONICA DA SILVA RODRIGUES"
-        };
-
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -64,52 +52,52 @@
         });
 
         function consultarSLA() {
-            const consulta = document.getElementById('consulta').value.trim().toUpperCase();
-            if (!consulta) {
-                alert("Digite um login ou nome!");
+            const login = document.getElementById('login').value.trim();
+            if (!login) {
+                alert("Digite um login!");
                 return;
             }
-
-            let nomeConsultado = logins[consulta] || consulta;
-            let ganhos = 0, perdas = 0, tempoGanho = 0, tempoPerda = 0, countGanho = 0, countPerda = 0;
+            
+            let ganhos = 0, perdas = 0;
+            let tempoTotalGanhos = 0, tempoTotalPerdas = 0;
+            let countGanhos = 0, countPerdas = 0;
             let resultados = [];
 
             dadosPlanilha.forEach(row => {
-                if (row[1] === nomeConsultado) {
-                    let statusSLA = (row[3] === 11) ? "Dentro do SLA" : (row[3] === 10) ? "Fora do SLA" : "-";
-                    let tempo = row[4] || 0;
+                if (row[1] === login) {
+                    if (row[2] === 0 || row[3] === 0) return; 
                     
-                    if (statusSLA === "Dentro do SLA") {
+                    let status = "-";
+                    if (row[2] === 11 && row[3] === 11) {
+                        status = "Dentro do SLA";
                         ganhos++;
-                        tempoGanho += tempo;
-                        countGanho++;
-                    }
-                    if (statusSLA === "Fora do SLA") {
+                        tempoTotalGanhos += row[4];
+                        countGanhos++;
+                    } else if (row[2] === 10 && row[3] === 10) {
+                        status = "Fora do SLA";
                         perdas++;
-                        tempoPerda += tempo;
-                        countPerda++;
+                        tempoTotalPerdas += row[4];
+                        countPerdas++;
                     }
-
-                    resultados.push({ ralRec: row[0], nome: row[1], volume: row[2], sla: statusSLA, tempo });
+                    
+                    resultados.push({ ralrec: row[0], volume: row[2], status, tempo: row[4] });
                 }
             });
             
-            let mediaTempoGanho = countGanho ? (tempoGanho / countGanho).toFixed(2) : "-";
-            let mediaTempoPerda = countPerda ? (tempoPerda / countPerda).toFixed(2) : "-";
-            
-            document.getElementById('resumo').innerText = `Ganhos: ${ganhos}, Perdas: ${perdas} | Tempo médio ganhos: ${mediaTempoGanho}, Tempo médio perdas: ${mediaTempoPerda}`;
-            
+            let tempoMedioGanhos = countGanhos > 0 ? (tempoTotalGanhos / countGanhos).toFixed(2) : "-";
+            let tempoMedioPerdas = countPerdas > 0 ? (tempoTotalPerdas / countPerdas).toFixed(2) : "-";
+
+            document.getElementById('resumo').innerText = `Ganhos: ${ganhos}, Perdas: ${perdas} | Tempo Médio - Ganhos: ${tempoMedioGanhos}, Perdas: ${tempoMedioPerdas}`;
             const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
             tabela.innerHTML = "";
             resultados.forEach(res => {
                 let row = tabela.insertRow();
-                row.insertCell(0).innerText = res.ralRec;
-                row.insertCell(1).innerText = res.nome;
-                row.insertCell(2).innerText = res.volume;
-                let slaCell = row.insertCell(3);
-                slaCell.innerText = res.sla;
-                slaCell.classList.add(res.sla === "Dentro do SLA" ? "ganho" : "perda");
-                row.insertCell(4).innerText = res.tempo;
+                row.insertCell(0).innerText = res.ralrec;
+                row.insertCell(1).innerText = res.volume;
+                let statusCell = row.insertCell(2);
+                statusCell.innerText = res.status;
+                statusCell.className = res.status === "Dentro do SLA" ? "ganho" : res.status === "Fora do SLA" ? "perda" : "";
+                row.insertCell(3).innerText = res.tempo;
             });
         }
     </script>
