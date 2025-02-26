@@ -1,84 +1,75 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta SLA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        input, button { padding: 10px; margin: 10px; }
-        table { width: 80%; margin: auto; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 8px; }
-        .ganho { background-color: green; color: white; }
-        .perda { background-color: red; color: white; }
-        .botao { background-color: #d52b1e; color: white; border: none; padding: 10px 20px; cursor: pointer; }
-        .botao:hover { background-color: #b2221a; }
-        .logo { width: 150px; }
-    </style>
-</head>
-<body>
-    <img class="logo" src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
-    <h2>Consulta de SLA</h2>
-    <input type="file" id="upload" accept=".xlsx">
-    <br>
-    <input type="text" id="login" placeholder="Digite o login">
-    <button class="botao" onclick="consultarSLA()">Consultar</button>
-    <br>
-    <h3>Resultados:</h3>
-    <table id="tabelaResultados">
-        <thead>
-            <tr>
-                <th>RAL/REC</th>
-                <th>Resultado</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+import pandas as pd
+import dash
+from dash import dcc, html, Input, Output, dash_table
+import dash_bootstrap_components as dbc
+
+# Inicialização do app com tema profissional
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# Layout do app
+app.layout = dbc.Container([
+    html.H2("Consulta de SLA", className="text-center mt-4"),
+    dbc.Row([
+        dbc.Col(dcc.Upload(
+            id='upload-data',
+            children=html.Button('Escolher arquivo', className='btn btn-secondary'),
+            multiple=False
+        ), width=4),
+    ], className="mb-3 justify-content-center"),
+    dbc.Row([
+        dbc.Col(dcc.Input(id='input-login', type='text', placeholder='Digite o login', className="form-control"), width=3),
+        dbc.Col(html.Button('Consultar', id='btn-consultar', className='btn btn-danger'), width=2)
+    ], className="mb-4 justify-content-center"),
+    html.H4("Resultados:", className="mt-3"),
+    html.Div(id='table-container')
+])
+
+# Callback para processar os dados
+@app.callback(
+    Output('table-container', 'children'),
+    Input('upload-data', 'contents'),
+    Input('input-login', 'value'),
+    Input('btn-consultar', 'n_clicks')
+)
+def update_table(contents, login, n_clicks):
+    if not contents or not login or not n_clicks:
+        return ""
     
-    <script>
-        let dadosPlanilha = [];
-        document.getElementById('upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                alert("Planilha carregada com sucesso!");
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function consultarSLA() {
-            const login = document.getElementById('login').value.trim();
-            if (!login) {
-                alert("Digite um login!");
-                return;
+    # Carregar os dados da planilha
+    df = pd.read_excel("/mnt/data/ETIT_Empresarial_Atualizado.xlsx", header=None)
+    df.columns = ["RAL/REC", "Login", "Volume", "SLA"]
+    df = df[df["Login"] == login]
+    
+    if df.empty:
+        return html.Div("Nenhum dado encontrado para este login.", className="text-danger")
+    
+    # Definir resultado de SLA
+    df["Resultado"] = df["SLA"].apply(lambda x: "Ganho" if x == 1 else "Perda")
+    
+    # Criar tabela estilizada
+    table = dash_table.DataTable(
+        columns=[
+            {"name": "RAL/REC", "id": "RAL/REC"},
+            {"name": "Resultado", "id": "Resultado"}
+        ],
+        data=df[["RAL/REC", "Resultado"]].to_dict('records'),
+        style_data_conditional=[
+            {
+                "if": {"filter_query": '{Resultado} eq "Ganho"'},
+                "backgroundColor": "green",
+                "color": "white"
+            },
+            {
+                "if": {"filter_query": '{Resultado} eq "Perda"'},
+                "backgroundColor": "red",
+                "color": "white"
             }
+        ],
+        style_table={'overflowX': 'auto'},
+        style_header={"backgroundColor": "#f8f9fa", "fontWeight": "bold"}
+    )
+    return table
 
-            let resultados = [];
-
-            dadosPlanilha.forEach(row => {
-                if (row[1] === login) {
-                    let resultado = (row[2] === 1 && row[3] === 1) ? "Ganho" : (row[2] === 1 && row[3] === 0) ? "Perda" : "-";
-                    if (row[2] === 0) return; // Ignorar entradas que começam com 0
-                    resultados.push({ id: row[0], status: resultado });
-                }
-            });
-
-            const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
-            tabela.innerHTML = "";
-            resultados.forEach(res => {
-                let row = tabela.insertRow();
-                row.insertCell(0).innerText = res.id;
-                let statusCell = row.insertCell(1);
-                statusCell.innerText = res.status;
-                statusCell.className = res.status === "Ganho" ? "ganho" : "perda";
-            });
-        }
-    </script>
-</body>
-</html>
+# Rodar o app
+if __name__ == '__main__':
+    app.run_server(debug=True)
