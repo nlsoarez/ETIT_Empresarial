@@ -18,6 +18,7 @@
         th { background-color: #d52b1e; color: white; }
         .ganho { background-color: green; color: white; }
         .perda { background-color: red; color: white; }
+        .contador { font-weight: bold; margin-top: 10px; }
         @media (max-width: 600px) {
             .input-group { flex-direction: column; gap: 5px; }
             input, button { width: 100%; }
@@ -36,11 +37,23 @@
             <button class="botao" onclick="consultarSLA()">Consultar</button>
         </div>
         <h3>Resultados:</h3>
-        <table id="tabelaResultados">
+        <div id="contadores" class="contador"></div>
+
+        <h3>Ganhos:</h3>
+        <table id="tabelaGanhos">
             <thead>
                 <tr>
                     <th>RAL/REC</th>
-                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>Perdas:</h3>
+        <table id="tabelaPerdas">
+            <thead>
+                <tr>
+                    <th>RAL/REC</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -70,23 +83,36 @@
                 return;
             }
 
-            let resultados = [];
+            let ganhos = [];
+            let perdas = [];
+
             dadosPlanilha.forEach(row => {
                 if (row[1] === login) {
-                    let resultado = (row[2] === 1 && row[3] === 1) ? "Ganho" : (row[2] === 1 && row[3] === 0) ? "Perda" : "-";
-                    if (row[2] === 0) return; // Ignorar entradas que começam com 0
-                    resultados.push({ id: row[0], status: resultado });
+                    if (row[2] === 0) return; // Ignorar entradas inválidas
+                    if (row[2] === 1 && row[3] === 1) {
+                        ganhos.push(row[0]);
+                    } else if (row[2] === 1 && row[3] === 0) {
+                        perdas.push(row[0]);
+                    }
                 }
             });
 
-            const tabela = document.getElementById('tabelaResultados').getElementsByTagName('tbody')[0];
+            document.getElementById("contadores").innerHTML = `
+                Total de Ganhos: ${ganhos.length} | Total de Perdas: ${perdas.length}
+            `;
+
+            atualizarTabela("tabelaGanhos", ganhos, "ganho");
+            atualizarTabela("tabelaPerdas", perdas, "perda");
+        }
+
+        function atualizarTabela(idTabela, dados, classe) {
+            const tabela = document.getElementById(idTabela).getElementsByTagName("tbody")[0];
             tabela.innerHTML = "";
-            resultados.forEach(res => {
+            dados.forEach(item => {
                 let row = tabela.insertRow();
-                row.insertCell(0).innerText = res.id;
-                let statusCell = row.insertCell(1);
-                statusCell.innerText = res.status;
-                statusCell.className = res.status === "Ganho" ? "ganho" : "perda";
+                let cell = row.insertCell(0);
+                cell.innerText = item;
+                cell.className = classe;
             });
         }
     </script>
