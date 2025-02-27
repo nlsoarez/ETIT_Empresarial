@@ -8,7 +8,6 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f9fa; }
         .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
-        .logo { width: 150px; margin-bottom: 15px; }
         .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         input, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
         .botao { background-color: #d52b1e; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -16,18 +15,13 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #d52b1e; color: white; }
-        .dentro { background-color: green; color: white; }
-        .fora { background-color: red; color: white; }
+        .ganho { background-color: green; color: white; }
+        .perda { background-color: red; color: white; }
         .contador { font-weight: bold; margin-top: 10px; }
-        @media (max-width: 600px) {
-            .input-group { flex-direction: column; gap: 5px; }
-            input, button { width: 100%; }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <img class="logo" src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
         <h2>Painel ETIT Empresarial</h2>
         <div class="input-group">
             <input type="file" id="upload" accept=".xlsx">
@@ -40,23 +34,17 @@
         <div id="contadores" class="contador"></div>
 
         <h3>Dentro do SLA:</h3>
-        <table id="tabelaDentro">
+        <table id="tabelaGanhos">
             <thead>
-                <tr>
-                    <th>Ticket</th>
-                    <th>Tempo (min)</th>
-                </tr>
+                <tr><th>RAL/REC</th></tr>
             </thead>
             <tbody></tbody>
         </table>
 
         <h3>Fora do SLA:</h3>
-        <table id="tabelaFora">
+        <table id="tabelaPerdas">
             <thead>
-                <tr>
-                    <th>Ticket</th>
-                    <th>Tempo (min)</th>
-                </tr>
+                <tr><th>RAL/REC</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -64,6 +52,7 @@
 
     <script>
         let dadosPlanilha = [];
+
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -73,37 +62,52 @@
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                console.log("Planilha carregada:", dadosPlanilha); // Debug
                 alert("Planilha carregada com sucesso!");
             };
             reader.readAsArrayBuffer(file);
         });
 
         function consultarSLA() {
-            const termo = document.getElementById('login').value.trim().toLowerCase();
-            if (!termo) {
+            const login = document.getElementById('login').value.trim();
+            if (!login) {
                 alert("Digite um login ou nome!");
                 return;
             }
 
-            let dentroSLA = [];
-            let foraSLA = [];
+            console.log("Consultando para:", login); // Debug
+
+            let ganhos = [];
+            let perdas = [];
 
             dadosPlanilha.forEach(row => {
-                if (row[1]?.toLowerCase().includes(termo) || row[4]?.toLowerCase().includes(termo)) {
-                    if (row[2] === 1) {
-                        dentroSLA.push([row[0], row[3]]);
-                    } else if (row[2] === 0) {
-                        foraSLA.push([row[0], row[3]]);
+                if (!row || row.length < 4) return; // Ignorar linhas incompletas
+
+                let ralRec = row[0];  // Supondo que a coluna RAL/REC está na posição 0
+                let usuario = row[1]?.toString().trim().toLowerCase(); // Nome/Login
+                let valido = row[2]; // Status de validade
+                let sla = row[3]; // SLA (1 dentro, 0 fora)
+
+                if (usuario.includes(login.toLowerCase())) {
+                    console.log(`Encontrado: ${ralRec}, SLA: ${sla}`); // Debug
+
+                    if (valido === 1) {
+                        if (sla === 1) {
+                            ganhos.push(ralRec);
+                        } else if (sla === 0) {
+                            perdas.push(ralRec);
+                        }
                     }
                 }
             });
 
             document.getElementById("contadores").innerHTML = `
-                Total Dentro do SLA: ${dentroSLA.length} | Total Fora do SLA: ${foraSLA.length}
+                Total de Dentro do SLA: ${ganhos.length} | Total de Fora do SLA: ${perdas.length}
             `;
 
-            atualizarTabela("tabelaDentro", dentroSLA, "dentro");
-            atualizarTabela("tabelaFora", foraSLA, "fora");
+            atualizarTabela("tabelaGanhos", ganhos, "ganho");
+            atualizarTabela("tabelaPerdas", perdas, "perda");
         }
 
         function atualizarTabela(idTabela, dados, classe) {
@@ -111,11 +115,9 @@
             tabela.innerHTML = "";
             dados.forEach(item => {
                 let row = tabela.insertRow();
-                let cell1 = row.insertCell(0);
-                let cell2 = row.insertCell(1);
-                cell1.innerText = item[0];
-                cell2.innerText = item[1];
-                row.className = classe;
+                let cell = row.insertCell(0);
+                cell.innerText = item;
+                cell.className = classe;
             });
         }
     </script>
