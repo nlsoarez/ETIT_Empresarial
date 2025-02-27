@@ -16,8 +16,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #d52b1e; color: white; }
-        .ganho { background-color: green; color: white; }
-        .perda { background-color: red; color: white; }
+        .dentro { background-color: green; color: white; }
+        .fora { background-color: red; color: white; }
         .contador { font-weight: bold; margin-top: 10px; }
         @media (max-width: 600px) {
             .input-group { flex-direction: column; gap: 5px; }
@@ -33,14 +33,14 @@
             <input type="file" id="upload" accept=".xlsx">
         </div>
         <div class="input-group">
-            <input type="text" id="login" placeholder="Digite o login">
+            <input type="text" id="consulta" placeholder="Digite o login ou nome">
             <button class="botao" onclick="consultarSLA()">Consultar</button>
         </div>
         <h3>Resultados:</h3>
         <div id="contadores" class="contador"></div>
 
-        <h3>Ganhos:</h3>
-        <table id="tabelaGanhos">
+        <h3>Dentro do SLA:</h3>
+        <table id="tabelaDentro">
             <thead>
                 <tr>
                     <th>RAL/REC</th>
@@ -49,8 +49,8 @@
             <tbody></tbody>
         </table>
 
-        <h3>Perdas:</h3>
-        <table id="tabelaPerdas">
+        <h3>Fora do SLA:</h3>
+        <table id="tabelaFora">
             <thead>
                 <tr>
                     <th>RAL/REC</th>
@@ -62,6 +62,19 @@
 
     <script>
         let dadosPlanilha = [];
+        const loginsNomes = {
+            "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
+            "N5619600": "BRUNO COSTA BUCARD",
+            "N0189105": "IGOR MARCELINO DE MARINS",
+            "N5713690": "GABRIELA TAVARES DA SILVA",
+            "N5922887": "ROMULO BARBOSA NICOLAE",
+            "F201714": "FERNANDA MESQUITA DE FREITAS",
+            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
+            "N5819183": "RODRIGO PIRES BERNARDINO",
+            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
+            "N5932064": "MONICA DA SILVA RODRIGUES"
+        };
+
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -77,32 +90,37 @@
         });
 
         function consultarSLA() {
-            const login = document.getElementById('login').value.trim();
-            if (!login) {
-                alert("Digite um login!");
+            const consulta = document.getElementById('consulta').value.trim().toUpperCase();
+            if (!consulta) {
+                alert("Digite um login ou nome!");
                 return;
             }
 
-            let ganhos = [];
-            let perdas = [];
+            const login = Object.keys(loginsNomes).find(key => key === consulta || loginsNomes[key] === consulta);
+            if (!login) {
+                alert("Login ou nome não encontrado!");
+                return;
+            }
+
+            let dentroSLA = [];
+            let foraSLA = [];
 
             dadosPlanilha.forEach(row => {
                 if (row[1] === login) {
-                    if (row[2] === 0) return; // Ignorar entradas inválidas
-                    if (row[2] === 1 && row[3] === 1) {
-                        ganhos.push(row[0]);
-                    } else if (row[2] === 1 && row[3] === 0) {
-                        perdas.push(row[0]);
+                    if (row[2] === 1) {
+                        dentroSLA.push(row[0]);
+                    } else if (row[2] === 0) {
+                        foraSLA.push(row[0]);
                     }
                 }
             });
 
             document.getElementById("contadores").innerHTML = `
-                Total de Ganhos: ${ganhos.length} | Total de Perdas: ${perdas.length}
+                Total Dentro do SLA: ${dentroSLA.length} | Total Fora do SLA: ${foraSLA.length}
             `;
 
-            atualizarTabela("tabelaGanhos", ganhos, "ganho");
-            atualizarTabela("tabelaPerdas", perdas, "perda");
+            atualizarTabela("tabelaDentro", dentroSLA, "dentro");
+            atualizarTabela("tabelaFora", foraSLA, "fora");
         }
 
         function atualizarTabela(idTabela, dados, classe) {
