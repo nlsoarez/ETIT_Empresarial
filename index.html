@@ -36,7 +36,7 @@
         <h3>Dentro do SLA:</h3>
         <table id="tabelaGanhos">
             <thead>
-                <tr><th>RAL/REC</th></tr>
+                <tr><th>Ticket</th><th>Tempo</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -44,7 +44,7 @@
         <h3>Fora do SLA:</h3>
         <table id="tabelaPerdas">
             <thead>
-                <tr><th>RAL/REC</th></tr>
+                <tr><th>Ticket</th><th>Tempo</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -82,22 +82,21 @@
             let perdas = [];
 
             dadosPlanilha.forEach(row => {
-                if (!row || row.length < 4) return; // Ignorar linhas incompletas
+                if (!row || row.length < 5) return; // Ignorar linhas incompletas
 
-                let ralRec = row[0];  // Supondo que a coluna RAL/REC está na posição 0
-                let usuario = row[1]?.toString().trim().toLowerCase(); // Nome/Login
-                let valido = row[2]; // Status de validade
-                let sla = row[3]; // SLA (1 dentro, 0 fora)
+                let ticket = row[0];  // Coluna A - Tickets
+                let usuarioLogin = row[1]?.toString().trim().toLowerCase(); // Coluna B - Logins
+                let usuarioNome = row[2]?.toString().trim().toLowerCase(); // Coluna C - Nomes
+                let sla = row[3]; // Coluna D - SLA (1 dentro, 0 fora)
+                let tempo = row[4]; // Coluna E - Tempo
 
-                if (usuario.includes(login.toLowerCase())) {
-                    console.log(`Encontrado: ${ralRec}, SLA: ${sla}`); // Debug
+                if (usuarioLogin.includes(login.toLowerCase()) || usuarioNome.includes(login.toLowerCase())) {
+                    console.log(`Encontrado: Ticket ${ticket}, SLA: ${sla}, Tempo: ${tempo}`); // Debug
 
-                    if (valido === 1) {
-                        if (sla === 1) {
-                            ganhos.push(ralRec);
-                        } else if (sla === 0) {
-                            perdas.push(ralRec);
-                        }
+                    if (sla === 1) {
+                        ganhos.push([ticket, tempo]);
+                    } else if (sla === 0) {
+                        perdas.push([ticket, tempo]);
                     }
                 }
             });
@@ -115,9 +114,11 @@
             tabela.innerHTML = "";
             dados.forEach(item => {
                 let row = tabela.insertRow();
-                let cell = row.insertCell(0);
-                cell.innerText = item;
-                cell.className = classe;
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                cell1.innerText = item[0]; // Ticket
+                cell2.innerText = item[1]; // Tempo
+                row.className = classe;
             });
         }
     </script>
