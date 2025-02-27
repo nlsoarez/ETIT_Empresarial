@@ -16,8 +16,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #d52b1e; color: white; }
-        .dentro { background-color: green; color: white; }
-        .fora { background-color: red; color: white; }
+        .ganho { background-color: green; color: white; }
+        .perda { background-color: red; color: white; }
         .contador { font-weight: bold; margin-top: 10px; }
         @media (max-width: 600px) {
             .input-group { flex-direction: column; gap: 5px; }
@@ -40,7 +40,7 @@
         <div id="contadores" class="contador"></div>
 
         <h3>Dentro do SLA:</h3>
-        <table id="tabelaDentro">
+        <table id="tabelaGanhos">
             <thead>
                 <tr>
                     <th>RAL/REC</th>
@@ -50,7 +50,7 @@
         </table>
 
         <h3>Fora do SLA:</h3>
-        <table id="tabelaFora">
+        <table id="tabelaPerdas">
             <thead>
                 <tr>
                     <th>RAL/REC</th>
@@ -62,7 +62,7 @@
 
     <script>
         let dadosPlanilha = [];
-        const loginsNomes = {
+        const colaboradores = {
             "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
             "N5619600": "BRUNO COSTA BUCARD",
             "N0189105": "IGOR MARCELINO DE MARINS",
@@ -96,31 +96,30 @@
                 return;
             }
 
-            const login = Object.keys(loginsNomes).find(key => key === consulta || loginsNomes[key] === consulta);
-            if (!login) {
-                alert("Login ou nome não encontrado!");
-                return;
-            }
-
-            let dentroSLA = [];
-            let foraSLA = [];
+            let ganhos = [];
+            let perdas = [];
 
             dadosPlanilha.forEach(row => {
-                if (row[1] === login) {
-                    if (row[2] === 1) {
-                        dentroSLA.push(row[0]);
-                    } else if (row[2] === 0) {
-                        foraSLA.push(row[0]);
+                const login = row[1] ? row[1].toString().trim().toUpperCase() : "";
+                const sla = row[2]; // Nova lógica: 1 = Dentro do SLA, 0 = Fora do SLA
+                const ral = row[0];
+
+                // Verifica se a consulta corresponde a um login ou nome
+                if (login === consulta || (colaboradores[login] && colaboradores[login] === consulta)) {
+                    if (sla === 1) {
+                        ganhos.push(ral);
+                    } else if (sla === 0) {
+                        perdas.push(ral);
                     }
                 }
             });
 
             document.getElementById("contadores").innerHTML = `
-                Total Dentro do SLA: ${dentroSLA.length} | Total Fora do SLA: ${foraSLA.length}
+                Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}
             `;
 
-            atualizarTabela("tabelaDentro", dentroSLA, "dentro");
-            atualizarTabela("tabelaFora", foraSLA, "fora");
+            atualizarTabela("tabelaGanhos", ganhos, "ganho");
+            atualizarTabela("tabelaPerdas", perdas, "perda");
         }
 
         function atualizarTabela(idTabela, dados, classe) {
