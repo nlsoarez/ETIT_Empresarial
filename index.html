@@ -16,8 +16,8 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background-color: #d52b1e; color: white; }
-        .ganho { background-color: green; color: white; }
-        .perda { background-color: red; color: white; }
+        .dentro { background-color: green; color: white; }
+        .fora { background-color: red; color: white; }
         .contador { font-weight: bold; margin-top: 10px; }
         @media (max-width: 600px) {
             .input-group { flex-direction: column; gap: 5px; }
@@ -38,20 +38,25 @@
         </div>
         <h3>Resultados:</h3>
         <div id="contadores" class="contador"></div>
-        <div id="medias" class="contador"></div>
 
-        <h3>Ganhos:</h3>
-        <table id="tabelaGanhos">
+        <h3>Dentro do SLA:</h3>
+        <table id="tabelaDentro">
             <thead>
-                <tr><th>RAL/REC</th></tr>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Tempo (min)</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
 
-        <h3>Perdas:</h3>
-        <table id="tabelaPerdas">
+        <h3>Fora do SLA:</h3>
+        <table id="tabelaFora">
             <thead>
-                <tr><th>RAL/REC</th></tr>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Tempo (min)</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -59,19 +64,6 @@
 
     <script>
         let dadosPlanilha = [];
-        const loginNomeMap = {
-            "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
-            "N5619600": "BRUNO COSTA BUCARD",
-            "N0189105": "IGOR MARCELINO DE MARINS",
-            "N5713690": "GABRIELA TAVARES DA SILVA",
-            "N5922887": "ROMULO BARBOSA NICOLAE",
-            "F201714": "FERNANDA MESQUITA DE FREITAS",
-            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
-            "N5819183": "RODRIGO PIRES BERNARDINO",
-            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
-            "N5932064": "MONICA DA SILVA RODRIGUES"
-        };
-
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -87,45 +79,31 @@
         });
 
         function consultarSLA() {
-            const entrada = document.getElementById('login').value.trim().toUpperCase();
-            if (!entrada) {
+            const termo = document.getElementById('login').value.trim().toLowerCase();
+            if (!termo) {
                 alert("Digite um login ou nome!");
                 return;
             }
-            const login = Object.keys(loginNomeMap).find(l => l === entrada || loginNomeMap[l] === entrada);
-            if (!login) {
-                alert("Login ou nome não encontrado!");
-                return;
-            }
 
-            let ganhos = [];
-            let perdas = [];
-            let tempos = [];
-            let temposGanhos = [];
-            let temposPerdas = [];
+            let dentroSLA = [];
+            let foraSLA = [];
 
             dadosPlanilha.forEach(row => {
-                if (row[1] === login) {
+                if (row[1]?.toLowerCase().includes(termo) || row[4]?.toLowerCase().includes(termo)) {
                     if (row[2] === 1) {
-                        ganhos.push(row[0]);
-                        temposGanhos.push(row[4]);
+                        dentroSLA.push([row[0], row[3]]);
                     } else if (row[2] === 0) {
-                        perdas.push(row[0]);
-                        temposPerdas.push(row[4]);
+                        foraSLA.push([row[0], row[3]]);
                     }
-                    tempos.push(row[4]);
                 }
             });
 
             document.getElementById("contadores").innerHTML = `
-                Total de Ganhos: ${ganhos.length} | Total de Perdas: ${perdas.length}
-            `;
-            document.getElementById("medias").innerHTML = `
-                Média de Tempo Total: ${calcularMedia(tempos)} min | Média de Tempo Ganhos: ${calcularMedia(temposGanhos)} min | Média de Tempo Perdas: ${calcularMedia(temposPerdas)} min
+                Total Dentro do SLA: ${dentroSLA.length} | Total Fora do SLA: ${foraSLA.length}
             `;
 
-            atualizarTabela("tabelaGanhos", ganhos, "ganho");
-            atualizarTabela("tabelaPerdas", perdas, "perda");
+            atualizarTabela("tabelaDentro", dentroSLA, "dentro");
+            atualizarTabela("tabelaFora", foraSLA, "fora");
         }
 
         function atualizarTabela(idTabela, dados, classe) {
@@ -133,16 +111,12 @@
             tabela.innerHTML = "";
             dados.forEach(item => {
                 let row = tabela.insertRow();
-                let cell = row.insertCell(0);
-                cell.innerText = item;
-                cell.className = classe;
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                cell1.innerText = item[0];
+                cell2.innerText = item[1];
+                row.className = classe;
             });
-        }
-
-        function calcularMedia(array) {
-            if (array.length === 0) return "N/A";
-            const soma = array.reduce((a, b) => a + b, 0);
-            return (soma / array.length).toFixed(2);
         }
     </script>
 </body>
