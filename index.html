@@ -33,28 +33,25 @@
             <input type="file" id="upload" accept=".xlsx">
         </div>
         <div class="input-group">
-            <input type="text" id="consulta" placeholder="Digite o login ou nome">
+            <input type="text" id="login" placeholder="Digite o login ou nome">
             <button class="botao" onclick="consultarSLA()">Consultar</button>
         </div>
         <h3>Resultados:</h3>
         <div id="contadores" class="contador"></div>
+        <div id="medias" class="contador"></div>
 
-        <h3>Dentro do SLA:</h3>
+        <h3>Ganhos:</h3>
         <table id="tabelaGanhos">
             <thead>
-                <tr>
-                    <th>RAL/REC</th>
-                </tr>
+                <tr><th>RAL/REC</th></tr>
             </thead>
             <tbody></tbody>
         </table>
 
-        <h3>Fora do SLA:</h3>
+        <h3>Perdas:</h3>
         <table id="tabelaPerdas">
             <thead>
-                <tr>
-                    <th>RAL/REC</th>
-                </tr>
+                <tr><th>RAL/REC</th></tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -62,7 +59,7 @@
 
     <script>
         let dadosPlanilha = [];
-        const colaboradores = {
+        const loginNomeMap = {
             "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
             "N5619600": "BRUNO COSTA BUCARD",
             "N0189105": "IGOR MARCELINO DE MARINS",
@@ -90,32 +87,41 @@
         });
 
         function consultarSLA() {
-            const consulta = document.getElementById('consulta').value.trim().toUpperCase();
-            if (!consulta) {
+            const entrada = document.getElementById('login').value.trim().toUpperCase();
+            if (!entrada) {
                 alert("Digite um login ou nome!");
+                return;
+            }
+            const login = Object.keys(loginNomeMap).find(l => l === entrada || loginNomeMap[l] === entrada);
+            if (!login) {
+                alert("Login ou nome não encontrado!");
                 return;
             }
 
             let ganhos = [];
             let perdas = [];
+            let tempos = [];
+            let temposGanhos = [];
+            let temposPerdas = [];
 
             dadosPlanilha.forEach(row => {
-                const login = row[1] ? row[1].toString().trim().toUpperCase() : "";
-                const sla = row[2]; // Nova lógica: 1 = Dentro do SLA, 0 = Fora do SLA
-                const ral = row[0];
-
-                // Verifica se a consulta corresponde a um login ou nome
-                if (login === consulta || (colaboradores[login] && colaboradores[login] === consulta)) {
-                    if (sla === 1) {
-                        ganhos.push(ral);
-                    } else if (sla === 0) {
-                        perdas.push(ral);
+                if (row[1] === login) {
+                    if (row[2] === 1) {
+                        ganhos.push(row[0]);
+                        temposGanhos.push(row[4]);
+                    } else if (row[2] === 0) {
+                        perdas.push(row[0]);
+                        temposPerdas.push(row[4]);
                     }
+                    tempos.push(row[4]);
                 }
             });
 
             document.getElementById("contadores").innerHTML = `
-                Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}
+                Total de Ganhos: ${ganhos.length} | Total de Perdas: ${perdas.length}
+            `;
+            document.getElementById("medias").innerHTML = `
+                Média de Tempo Total: ${calcularMedia(tempos)} min | Média de Tempo Ganhos: ${calcularMedia(temposGanhos)} min | Média de Tempo Perdas: ${calcularMedia(temposPerdas)} min
             `;
 
             atualizarTabela("tabelaGanhos", ganhos, "ganho");
@@ -131,6 +137,12 @@
                 cell.innerText = item;
                 cell.className = classe;
             });
+        }
+
+        function calcularMedia(array) {
+            if (array.length === 0) return "N/A";
+            const soma = array.reduce((a, b) => a + b, 0);
+            return (soma / array.length).toFixed(2);
         }
     </script>
 </body>
