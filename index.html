@@ -55,6 +55,7 @@
     <script>
         let dadosPlanilha = [];
 
+        // Função para carregar a planilha
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -71,6 +72,7 @@
             reader.readAsArrayBuffer(file);
         });
 
+        // Função para consultar e processar os dados com base no login
         function consultarSLA() {
             const login = document.getElementById('login').value.trim();
             if (!login) {
@@ -86,21 +88,37 @@
             let totalTempoPerdas = 0;
 
             dadosPlanilha.forEach(row => {
-                if (!row || row.length < 5) return; // Ignorar linhas incompletas
+                if (!row || row.length < 7) return; // Ignorar linhas incompletas
 
-                let ticket = row[0];  // Coluna A - Tickets
+                let ticket = row[0];  // Coluna A - Tickets (Outage)
                 let usuarioLogin = row[1]?.toString().trim().toLowerCase(); // Coluna B - Logins
-                let usuarioNome = row[2]?.toString().trim().toLowerCase(); // Coluna C - Nomes
-                let sla = row[3]; // Coluna D - SLA (1 dentro, 0 fora)
-                let tempo = parseFloat(row[4]); // Coluna E - Tempo (convertido para número)
+                let inicio = row[2]; // Coluna C - Inicio
+                let fim = row[3]; // Coluna D - Fim
+                let hfcVolume = row[4]; // Coluna E - HFC - Volume
+                let hfcIndicador = row[5]; // Coluna F - HFC - Indicador
+                let gponVolume = row[6]; // Coluna G - GPON - Volume
+                let gponIndicador = row[7]; // Coluna H - GPON - Indicador
 
-                if (usuarioLogin.includes(login.toLowerCase()) || usuarioNome.includes(login.toLowerCase())) {
-                    console.log(`Encontrado: Ticket ${ticket}, SLA: ${sla}, Tempo: ${tempo}`); // Debug
+                // Calcular tempo em horas
+                let tempo = (new Date(fim) - new Date(inicio)) / 1000 / 60 / 60; // em horas
 
-                    if (sla === 1) {
+                // Ignorar caso HFC ou GPON tenham volume 0
+                if (hfcVolume == 0 || gponVolume == 0) return;
+
+                // Definir ganho ou perda
+                let resultado = "";
+                if ((hfcVolume == 1 && hfcIndicador == 1) || (gponVolume == 1 && gponIndicador == 1)) {
+                    resultado = "ganho";
+                } else if ((hfcVolume == 1 && hfcIndicador == 0) || (gponVolume == 1 && gponIndicador == 0)) {
+                    resultado = "perda";
+                }
+
+                // Comparar login
+                if (usuarioLogin && usuarioLogin.includes(login.toLowerCase())) {
+                    if (resultado === "ganho") {
                         ganhos.push([ticket, tempo]);
                         totalTempoGanhos += tempo;
-                    } else if (sla === 0) {
+                    } else if (resultado === "perda") {
                         perdas.push([ticket, tempo]);
                         totalTempoPerdas += tempo;
                     }
@@ -121,6 +139,7 @@
             atualizarTabela("tabelaPerdas", perdas, "perda");
         }
 
+        // Função para atualizar as tabelas de ganhos e perdas
         function atualizarTabela(idTabela, dados, classe) {
             const tabela = document.getElementById(idTabela).getElementsByTagName("tbody")[0];
             tabela.innerHTML = "";
