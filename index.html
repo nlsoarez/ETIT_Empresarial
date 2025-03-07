@@ -88,22 +88,22 @@
             let totalTempoPerdas = 0;
 
             dadosPlanilha.forEach(row => {
-                if (!row || row.length < 7) return; // Ignorar linhas incompletas
+                if (!row || row.length < 9) return; // Ignorar linhas incompletas
 
                 let ticket = row[0];  // Coluna A - Tickets (Outage)
                 let usuarioLogin = row[1]?.toString().trim().toLowerCase(); // Coluna B - Logins
                 let inicio = row[2]; // Coluna C - Inicio
                 let fim = row[3]; // Coluna D - Fim
-                let hfcVolume = row[4]; // Coluna E - HFC - Volume
-                let hfcIndicador = row[5]; // Coluna F - HFC - Indicador
-                let gponVolume = row[6]; // Coluna G - GPON - Volume
-                let gponIndicador = row[7]; // Coluna H - GPON - Indicador
+                let hfcVolume = row[5]; // Coluna F - HFC - Volume
+                let hfcIndicador = row[6]; // Coluna G - HFC - Indicador
+                let gponVolume = row[7]; // Coluna H - GPON - Volume
+                let gponIndicador = row[8]; // Coluna I - GPON - Indicador
 
                 // Calcular tempo em horas
                 let tempo = (new Date(fim) - new Date(inicio)) / 1000 / 60 / 60; // em horas
 
                 // Ignorar caso HFC ou GPON tenham volume 0
-                if (hfcVolume == 0 || gponVolume == 0) return;
+                if (hfcVolume == 0 && gponVolume == 0) return;
 
                 // Definir ganho ou perda
                 let resultado = "";
