@@ -59,12 +59,12 @@
             color: white; 
         }
         .ganho { 
-            background-color: green; 
-            color: white; 
+            background-color: #d4f7d0; 
+            color: green; 
         }
         .perda { 
-            background-color: red; 
-            color: white; 
+            background-color: #fddcdc; 
+            color: red; 
         }
         .contador { 
             font-weight: bold; 
@@ -74,12 +74,20 @@
             width: 120px; 
             margin-bottom: 20px;
         }
+        .resultados {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .resultados div {
+            width: 48%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Logo Claro Brasil -->
-        <img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Claro_logo_2012.png" alt="Claro Brasil Logo" class="logo">
+        <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo" class="logo">
 
         <h2>Painel ETIT Empresarial</h2>
 
@@ -95,26 +103,31 @@
         <!-- Nome do colaborador -->
         <h3 id="nomeColaborador"></h3>
 
-        <h3>Resultados:</h3>
+        <div class="resultados">
+            <div>
+                <h3>Dentro do SLA:</h3>
+                <div id="tempoMedioGanhos" class="contador"></div>
+                <table id="tabelaGanhos">
+                    <thead>
+                        <tr><th>Ticket</th><th>Tempo</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3>Fora do SLA:</h3>
+                <div id="tempoMedioPerdas" class="contador"></div>
+                <table id="tabelaPerdas">
+                    <thead>
+                        <tr><th>Ticket</th><th>Tempo</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="contadores" class="contador"></div>
-
-        <h3>Dentro do SLA:</h3>
-        <div id="tempoMedioGanhos" class="contador"></div>
-        <table id="tabelaGanhos">
-            <thead>
-                <tr><th>Ticket</th><th>Tempo</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <h3>Fora do SLA:</h3>
-        <div id="tempoMedioPerdas" class="contador"></div>
-        <table id="tabelaPerdas">
-            <thead>
-                <tr><th>Ticket</th><th>Tempo</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
     </div>
 
     <script>
