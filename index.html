@@ -82,6 +82,13 @@
         .resultados div {
             width: 48%;
         }
+        .tempo-medio {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -106,7 +113,7 @@
         <div class="resultados">
             <div>
                 <h3>Dentro do SLA:</h3>
-                <div id="tempoMedioGanhos" class="contador"></div>
+                <div id="tempoMedioGanhos" class="tempo-medio"></div>
                 <table id="tabelaGanhos">
                     <thead>
                         <tr><th>Ticket</th><th>Tempo</th></tr>
@@ -117,7 +124,7 @@
 
             <div>
                 <h3>Fora do SLA:</h3>
-                <div id="tempoMedioPerdas" class="contador"></div>
+                <div id="tempoMedioPerdas" class="tempo-medio"></div>
                 <table id="tabelaPerdas">
                     <thead>
                         <tr><th>Ticket</th><th>Tempo</th></tr>
