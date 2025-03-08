@@ -89,6 +89,13 @@
             margin: 10px 0;
             text-align: center;
         }
+        .tempo-medio-wrapper {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
@@ -113,7 +120,6 @@
         <div class="resultados">
             <div>
                 <h3>Dentro do SLA:</h3>
-                <div id="tempoMedioGanhos" class="tempo-medio"></div>
                 <table id="tabelaGanhos">
                     <thead>
                         <tr><th>Ticket</th><th>Tempo</th></tr>
@@ -124,7 +130,6 @@
 
             <div>
                 <h3>Fora do SLA:</h3>
-                <div id="tempoMedioPerdas" class="tempo-medio"></div>
                 <table id="tabelaPerdas">
                     <thead>
                         <tr><th>Ticket</th><th>Tempo</th></tr>
@@ -132,6 +137,12 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Centraliza as informações de tempo médio -->
+        <div class="tempo-medio-wrapper">
+            <div id="tempoMedioGanhos" class="tempo-medio"></div>
+            <div id="tempoMedioPerdas" class="tempo-medio"></div>
         </div>
 
         <div id="contadores" class="contador"></div>
