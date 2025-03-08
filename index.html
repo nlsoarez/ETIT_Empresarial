@@ -6,30 +6,95 @@
     <title>Consulta SLA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f9fa; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
-        flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-        input, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-        .botao { background-color: #d52b1e; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .botao:hover { background-color: #b2221a; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #d52b1e; color: white; }
-        .ganho { background-color: green; color: white; }
-        .perda { background-color: red; color: white; }
-        .contador { font-weight: bold; margin-top: 10px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background-color: #f8f9fa; 
+            margin: 0;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1); 
+            margin-top: 20px;
+        }
+        .input-group { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            margin-bottom: 20px;
+        }
+        input, button { 
+            padding: 12px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            border: 1px solid #ccc; 
+        }
+        .botao { 
+            background-color: #D52B1E; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .botao:hover { 
+            background-color: #b2221a; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: center; 
+        }
+        th { 
+            background-color: #D52B1E; 
+            color: white; 
+        }
+        .ganho { 
+            background-color: green; 
+            color: white; 
+        }
+        .perda { 
+            background-color: red; 
+            color: white; 
+        }
+        .contador { 
+            font-weight: bold; 
+            margin-top: 20px; 
+        }
+        .logo { 
+            width: 120px; 
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Logo Claro Brasil -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Claro_logo_2012.png" alt="Claro Brasil Logo" class="logo">
+
         <h2>Painel ETIT Empresarial</h2>
+
         <div class="input-group">
             <input type="file" id="upload" accept=".xlsx">
         </div>
+
         <div class="input-group">
             <input type="text" id="login" placeholder="Digite o login ou nome">
             <button class="botao" onclick="consultarSLA()">Consultar</button>
         </div>
+
+        <!-- Nome do colaborador -->
+        <h3 id="nomeColaborador"></h3>
+
         <h3>Resultados:</h3>
         <div id="contadores" class="contador"></div>
 
@@ -54,6 +119,18 @@
 
     <script>
         let dadosPlanilha = [];
+        const colaboradores = {
+            "N6088107": "Leandro Gonçalves de Carvalho",
+            "N5619600": "Bruno Costa Bucard",
+            "N0189105": "Igor Marcelino de Marins",
+            "N5713690": "Gabriela Tavares da Silva",
+            "N5922887": "Romulo Barbosa Nicolae",
+            "F201714": "Fernanda Mesquita de Freitas",
+            "N0125317": "Roberto Silva do Nascimento",
+            "N5819183": "Rodrigo Pires Bernardino",
+            "N5926003": "Suellen Hernandez da Silva",
+            "N5932064": "Monica da Silva Rodrigues"
+        };
 
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -84,6 +161,14 @@
             let perdas = [];
             let totalTempoGanhos = 0;
             let totalTempoPerdas = 0;
+
+            // Atualiza o nome do colaborador, se encontrado
+            const nomeColaborador = colaboradores[login.toUpperCase()];
+            if (nomeColaborador) {
+                document.getElementById('nomeColaborador').innerHTML = `Colaborador: ${nomeColaborador}`;
+            } else {
+                document.getElementById('nomeColaborador').innerHTML = "Colaborador não encontrado!";
+            }
 
             dadosPlanilha.forEach(row => {
                 if (!row || row.length < 5) return; // Ignorar linhas incompletas
