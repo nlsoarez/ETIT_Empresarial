@@ -8,7 +8,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f9fa; }
         .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
-        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
         input, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
         .botao { background-color: #d52b1e; color: white; border: none; cursor: pointer; font-weight: bold; }
         .botao:hover { background-color: #b2221a; }
@@ -95,7 +95,7 @@
                 let tempo = parseFloat(row[4]); // Coluna E - Tempo (convertido para número)
 
                 if (usuarioLogin.includes(login.toLowerCase()) || usuarioNome.includes(login.toLowerCase())) {
-                    console.log(Encontrado: Ticket ${ticket}, SLA: ${sla}, Tempo: ${tempo}); // Debug
+                    console.log(`Encontrado: Ticket ${ticket}, SLA: ${sla}, Tempo: ${tempo}`); // Debug
 
                     if (sla === 1) {
                         ganhos.push([ticket, tempo]);
@@ -111,11 +111,10 @@
             let mediaPerdas = perdas.length > 0 ? (totalTempoPerdas / perdas.length).toFixed(2) : "N/A";
 
             document.getElementById("contadores").innerHTML = 
-                Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}
-            ;
+                `Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}`;
 
-            document.getElementById("tempoMedioGanhos").innerHTML = Tempo Médio Dentro do SLA: <b>${mediaGanhos}</b>;
-            document.getElementById("tempoMedioPerdas").innerHTML = Tempo Médio Fora do SLA: <b>${mediaPerdas}</b>;
+            document.getElementById("tempoMedioGanhos").innerHTML = `Tempo Médio Dentro do SLA: <b>${mediaGanhos}</b>`;
+            document.getElementById("tempoMedioPerdas").innerHTML = `Tempo Médio Fora do SLA: <b>${mediaPerdas}</b>`;
 
             atualizarTabela("tabelaGanhos", ganhos, "ganho");
             atualizarTabela("tabelaPerdas", perdas, "perda");
