@@ -1,219 +1,224 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel ETIT Empresarial</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f2f2f2;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta SLA Empresarial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
 
-    .container {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
 
-    .logo img {
-      width: 140px;
-      display: block;
-      margin: 0 auto 20px;
-    }
+        .logo img {
+            width: 150px;
+            margin-bottom: 20px;
+        }
 
-    h2 {
-      color: #D52B1E;
-      text-align: center;
-      margin-bottom: 20px;
-    }
+        h2 {
+            font-size: 24px;
+            color: #D52B1E;
+            margin-bottom: 15px;
+        }
 
-    .input-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+        h3 {
+            font-size: 20px;
+            color: #444;
+            margin-top: 20px;
+        }
 
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
 
-    input[type="text"] {
-      width: 60%;
-    }
+        input, button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
 
-    .botao {
-      background-color: #D52B1E;
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        input {
+            width: 40%;
+        }
 
-    .botao:hover {
-      background-color: #B2221A;
-    }
+        .botao {
+            background-color: #D52B1E;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
+        .botao:hover {
+            background-color: #B2221A;
+        }
 
-    th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
 
-    th {
-      background-color: #D52B1E;
-      color: white;
-    }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
 
-    .ganho {
-      background-color: #4CAF50;
-      color: white;
-    }
+        th {
+            background-color: #D52B1E;
+            color: white;
+        }
 
-    .perda {
-      background-color: #FF4D4D;
-      color: white;
-    }
+        .ganho {
+            background-color: #4CAF50;
+            color: white;
+        }
 
-    .section {
-      margin-top: 30px;
-    }
+        .perda {
+            background-color: #FF4D4D;
+            color: white;
+        }
 
-    #resultadosMain h4 {
-      text-align: center;
-    }
-  </style>
+        .nome {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #444;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">
-      <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
+    <div class="container">
+        <div class="logo">
+            <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo">
+        </div>
+        <h2>Painel ETIT Empresarial</h2>
+
+        <div class="input-group">
+            <input type="file" id="upload" accept=".xlsx">
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="login" placeholder="Digite o login">
+            <button class="botao" onclick="consultar()">Consultar</button>
+        </div>
+
+        <div id="nomeUsuario" class="nome"></div>
+
+        <div class="resultados">
+            <div class="section" id="tabelaResultados">
+                <h3>Resultados:</h3>
+                <table>
+                    <thead>
+                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <h2>Painel ETIT Empresarial</h2>
 
-    <div class="input-group">
-      <input type="file" id="upload" accept=".xlsx">
-    </div>
+    <script>
+        let dadosPlanilha = [];
 
-    <div class="input-group">
-      <input type="text" id="matriculaInput" placeholder="Digite as matrículas separadas por vírgula">
-      <button class="botao" onclick="filtrarPorMatricula()">Consultar</button>
-    </div>
+        const loginToName = {
+            "N0238475": "MARLEY MARQUES RIBEIRO",
+            "N5923221": "KELLY PINHEIRO LIRA",
+            "F160641": "JENNIFER MARIA ANDRADE SANTOS",
+            "N5772086": "THIAGO PEREIRA DA SILVA",
+            "N0239871": "LEONARDO FERREIRA LIMA DE ALMEIDA",
+            "N5577565": "MARISTELLA MARCIA DOS SANTOS",
+            "N5737414": "SANDRO DA SILVA CARVALHO",
+            "N5972428": "CRISTIANE HERMOGENES DA SILVA",
+            "N6173055": "JEFFERSON LUIS GONÇALVES COITINHO",
+            "N5932090": "EVILÁZIO ANDRÉ DE MAGALHÃES GOMES PEREIRA",
+            "N0255801": "ELBERTON ANICETO HENRIQUE",
+            "N4014011": "ALAN MARINHO DIAS",
+            "N5923996": "JULIO CESAR SANTOS SOARES"
+        };
 
-    <div class="section" id="resultadosMain"></div>
-
-    <div class="section">
-      <h3>Dentro do SLA</h3>
-      <table>
-        <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo (min)</th></tr>
-        </thead>
-        <tbody id="tabelaResultadosGanhos"></tbody>
-      </table>
-    </div>
-
-    <div class="section">
-      <h3>Fora do SLA</h3>
-      <table>
-        <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo (min)</th></tr>
-        </thead>
-        <tbody id="tabelaResultadosPerdas"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script>
-    let dadosPlanilha = [];
-
-    document.getElementById('upload').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const primeiraAba = workbook.SheetNames[0];
-        const planilha = workbook.Sheets[primeiraAba];
-        dadosPlanilha = XLSX.utils.sheet_to_json(planilha, { header: 1 });
-        alert("Planilha carregada com sucesso!");
-      };
-
-      reader.readAsArrayBuffer(file);
-    });
-
-    function excelSerialToMinutes(serial) {
-      return Math.round(serial * 24 * 60); // converte dias em minutos
-    }
-
-    function filtrarPorMatricula() {
-      const matriculasDigitadas = document.getElementById('matriculaInput').value
-        .split(',')
-        .map(m => m.trim());
-
-      const ganhos = [];
-      const perdas = [];
-
-      dadosPlanilha.forEach((linha, index) => {
-        if (index === 0 || linha.length < 7) return;
-
-        const ticket = linha[0];
-        const matricula = String(linha[1]).trim();
-        const tempoRaw = linha[2];
-        const volume = Number(linha[5]);
-        const indicador = Number(linha[6]);
-
-        if (!matriculasDigitadas.includes(matricula)) return;
-
-        const tempoMinutos = excelSerialToMinutes(tempoRaw);
-
-        if (volume === 1 && indicador === 1) {
-          ganhos.push([matricula, ticket, tempoMinutos]);
-        } else if (volume === 1 && indicador === 0) {
-          perdas.push([matricula, ticket, tempoMinutos]);
-        }
-      });
-
-      document.getElementById("resultadosMain").innerHTML = `
-        <h4>Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}</h4>
-      `;
-
-      preencherTabela("tabelaResultadosGanhos", ganhos, "ganho");
-      preencherTabela("tabelaResultadosPerdas", perdas, "perda");
-    }
-
-    function preencherTabela(id, dados, classe) {
-      const tbody = document.getElementById(id);
-      tbody.innerHTML = "";
-
-      dados.forEach(linha => {
-        const tr = document.createElement("tr");
-        tr.className = classe;
-        linha.forEach(celula => {
-          const td = document.createElement("td");
-          td.textContent = celula;
-          tr.appendChild(td);
+        document.getElementById('upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                alert("Planilha carregada com sucesso!");
+            };
+            reader.readAsArrayBuffer(file);
         });
-        tbody.appendChild(tr);
-      });
-    }
-  </script>
+
+        function consultar() {
+            const login = document.getElementById('login').value.trim().toLowerCase();
+            if (!login) {
+                alert("Digite um login!");
+                return;
+            }
+
+            const nomeUsuario = loginToName[login.toUpperCase()] || "Nome não encontrado";
+            document.getElementById("nomeUsuario").innerHTML = `Nome: ${nomeUsuario}`;
+
+            const resultados = [];
+            dadosPlanilha.forEach((row, index) => {
+                if (index === 0 || !row || row.length < 7) return;
+
+                const ticket = row[0];
+                const usuarioLogin = row[1]?.toString().trim().toLowerCase();
+                const tempoRaw = parseFloat(row[4]); // Coluna E
+                const volume = parseInt(row[5]);     // Coluna F
+                const indicador = parseInt(row[6]);  // Coluna G
+
+                if (usuarioLogin && usuarioLogin.includes(login)) {
+                    const tempoMinutos = Math.round(tempoRaw * 1440);
+                    let status = "Ignorado";
+
+                    if (volume === 1 && indicador === 1) {
+                        status = "Dentro do SLA";
+                    } else if (volume === 1 && indicador === 0) {
+                        status = "Fora do SLA";
+                    } else {
+                        return; // ignora outros casos
+                    }
+
+                    resultados.push({ ticket, tempo: tempoMinutos, status });
+                }
+            });
+
+            atualizarTabelaResultados(resultados);
+        }
+
+        function atualizarTabelaResultados(dados) {
+            const tabela = document.getElementById("tabelaResultados").getElementsByTagName("tbody")[0];
+            tabela.innerHTML = "";
+            dados.forEach(item => {
+                const row = tabela.insertRow();
+                row.className = item.status === "Dentro do SLA" ? "ganho" : "perda";
+                row.insertCell(0).innerText = item.ticket;
+                row.insertCell(1).innerText = item.tempo;
+                row.insertCell(2).innerText = item.status;
+            });
+        }
+    </script>
 </body>
 </html>
