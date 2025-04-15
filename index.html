@@ -123,7 +123,7 @@
       <h3>Dentro do SLA</h3>
       <table>
         <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo</th><th>Volume</th><th>Indicador</th></tr>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo (min)</th></tr>
         </thead>
         <tbody id="tabelaResultadosGanhos"></tbody>
       </table>
@@ -133,7 +133,7 @@
       <h3>Fora do SLA</h3>
       <table>
         <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo</th><th>Volume</th><th>Indicador</th></tr>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo (min)</th></tr>
         </thead>
         <tbody id="tabelaResultadosPerdas"></tbody>
       </table>
@@ -159,6 +159,10 @@
       reader.readAsArrayBuffer(file);
     });
 
+    function excelSerialToMinutes(serial) {
+      return Math.round(serial * 24 * 60); // converte dias em minutos
+    }
+
     function filtrarPorMatricula() {
       const matriculasDigitadas = document.getElementById('matriculaInput').value
         .split(',')
@@ -172,16 +176,18 @@
 
         const ticket = linha[0];
         const matricula = String(linha[1]).trim();
-        const tempo = linha[2]; // Tempo na coluna C
-        const volume = Number(linha[5]); // Coluna F
-        const indicador = Number(linha[6]); // Coluna G
+        const tempoRaw = linha[2];
+        const volume = Number(linha[5]);
+        const indicador = Number(linha[6]);
 
         if (!matriculasDigitadas.includes(matricula)) return;
 
+        const tempoMinutos = excelSerialToMinutes(tempoRaw);
+
         if (volume === 1 && indicador === 1) {
-          ganhos.push([matricula, ticket, tempo, volume, indicador]);
+          ganhos.push([matricula, ticket, tempoMinutos]);
         } else if (volume === 1 && indicador === 0) {
-          perdas.push([matricula, ticket, tempo, volume, indicador]);
+          perdas.push([matricula, ticket, tempoMinutos]);
         }
       });
 
