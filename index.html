@@ -8,102 +8,134 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f9f9f9;
-      color: #333;
+      background-color: #f2f2f2;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      color: #333;
     }
+
     .container {
       max-width: 900px;
-      margin: auto;
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
+
+    .logo img {
+      width: 140px;
+      display: block;
+      margin: 0 auto 20px;
+    }
+
     h2 {
       color: #D52B1E;
-      margin-bottom: 20px;
       text-align: center;
+      margin-bottom: 20px;
     }
+
     .input-group {
-      text-align: center;
-      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
     }
+
     input, button {
       padding: 10px;
       font-size: 16px;
-      margin: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
+
+    input[type="text"] {
+      width: 60%;
+    }
+
     .botao {
       background-color: #D52B1E;
       color: white;
       border: none;
+      font-weight: bold;
       cursor: pointer;
     }
+
     .botao:hover {
-      background-color: #b11f17;
+      background-color: #B2221A;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 15px;
     }
+
     th, td {
       padding: 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       text-align: center;
     }
+
     th {
       background-color: #D52B1E;
       color: white;
     }
+
     .ganho {
       background-color: #4CAF50;
       color: white;
     }
+
     .perda {
       background-color: #FF4D4D;
       color: white;
     }
-    #resultadosMain {
+
+    .section {
+      margin-top: 30px;
+    }
+
+    #resultadosMain h4 {
       text-align: center;
-      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="logo">
+      <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Logo Claro">
+    </div>
     <h2>Painel ETIT Empresarial</h2>
 
     <div class="input-group">
       <input type="file" id="upload" accept=".xlsx">
-      <br>
-      <input type="text" id="matriculaInput" placeholder="Digite uma ou mais matrículas (separadas por vírgula)">
+    </div>
+
+    <div class="input-group">
+      <input type="text" id="matriculaInput" placeholder="Digite as matrículas separadas por vírgula">
       <button class="botao" onclick="filtrarPorMatricula()">Consultar</button>
     </div>
 
-    <div id="resultadosMain"></div>
+    <div class="section" id="resultadosMain"></div>
 
-    <div id="tabelaResultadosGanhos">
-      <h3>Dentro do SLA (Ganho)</h3>
+    <div class="section">
+      <h3>Dentro do SLA</h3>
       <table>
         <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo</th><th>Volume</th><th>Indicador</th></tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tabelaResultadosGanhos"></tbody>
       </table>
     </div>
 
-    <div id="tabelaResultadosPerdas">
-      <h3>Fora do SLA (Perda)</h3>
+    <div class="section">
+      <h3>Fora do SLA</h3>
       <table>
         <thead>
-          <tr><th>Matrícula</th><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Tempo</th><th>Volume</th><th>Indicador</th></tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tabelaResultadosPerdas"></tbody>
       </table>
     </div>
   </div>
@@ -111,17 +143,19 @@
   <script>
     let dadosPlanilha = [];
 
-    document.getElementById('upload').addEventListener('change', function(event) {
-      const file = event.target.files[0];
+    document.getElementById('upload').addEventListener('change', function (e) {
+      const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = function(e) {
+
+      reader.onload = function (e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        alert("Arquivo carregado com sucesso. Agora insira a matrícula para consulta.");
+        const primeiraAba = workbook.SheetNames[0];
+        const planilha = workbook.Sheets[primeiraAba];
+        dadosPlanilha = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+        alert("Planilha carregada com sucesso!");
       };
+
       reader.readAsArrayBuffer(file);
     });
 
@@ -138,15 +172,16 @@
 
         const ticket = linha[0];
         const matricula = String(linha[1]).trim();
-        const volume = Number(linha[5]);
-        const indicador = Number(linha[6]);
+        const tempo = linha[2]; // Tempo na coluna C
+        const volume = Number(linha[5]); // Coluna F
+        const indicador = Number(linha[6]); // Coluna G
 
         if (!matriculasDigitadas.includes(matricula)) return;
 
         if (volume === 1 && indicador === 1) {
-          ganhos.push([matricula, ticket, volume, indicador]);
+          ganhos.push([matricula, ticket, tempo, volume, indicador]);
         } else if (volume === 1 && indicador === 0) {
-          perdas.push([matricula, ticket, volume, indicador]);
+          perdas.push([matricula, ticket, tempo, volume, indicador]);
         }
       });
 
@@ -159,14 +194,15 @@
     }
 
     function preencherTabela(id, dados, classe) {
-      const tbody = document.querySelector(`#${id} tbody`);
+      const tbody = document.getElementById(id);
       tbody.innerHTML = "";
+
       dados.forEach(linha => {
         const tr = document.createElement("tr");
         tr.className = classe;
-        linha.forEach(valor => {
+        linha.forEach(celula => {
           const td = document.createElement("td");
-          td.textContent = valor;
+          td.textContent = celula;
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
