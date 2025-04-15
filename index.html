@@ -3,165 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta SLA</title>
+    <title>Painel ETIT Empresarial</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            padding: 20px; 
-            background-color: #f8f9fa; 
-            margin: 0;
-        }
-        .container { 
-            max-width: 800px; 
-            margin: auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 8px; 
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1); 
-            margin-top: 20px;
-        }
-        .input-group { 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px; 
-            margin-bottom: 20px;
-        }
-        input, button { 
-            padding: 12px; 
-            font-size: 16px; 
-            border-radius: 5px; 
-            border: 1px solid #ccc; 
-        }
-        .botao { 
-            background-color: #D52B1E; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            font-weight: bold; 
-        }
-        .botao:hover { 
-            background-color: #b2221a; 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 15px; 
-        }
-        th, td { 
-            border: 1px solid #ddd; 
-            padding: 12px; 
-            text-align: center; 
-        }
-        th { 
-            background-color: #D52B1E; 
-            color: white; 
-        }
-        .ganho { 
-            background-color: #d4f7d0; 
-            color: green; 
-        }
-        .perda { 
-            background-color: #fddcdc; 
-            color: red; 
-        }
-        .contador { 
-            font-weight: bold; 
-            margin-top: 20px; 
-        }
-        .logo { 
-            width: 120px; 
-            margin-bottom: 20px;
-        }
-        .resultados {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .resultados div {
-            width: 48%;
-        }
-        .tempo-medio {
-            font-size: 18px;
-            font-weight: bold;
+        /* Estilos mantidos iguais aos anteriores para consistência */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
             color: #333;
-            margin: 10px 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        .tempo-medio-wrapper {
+
+        .logo img {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #D52B1E;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 20px;
+            color: #444;
             margin-top: 20px;
+        }
+
+        .input-group {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input, button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        input {
+            width: 40%;
+        }
+
+        .botao {
+            background-color: #D52B1E;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .botao:hover {
+            background-color: #B2221A;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #D52B1E;
+            color: white;
+        }
+
+        .ganho {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .perda {
+            background-color: #FF4D4D;
+            color: white;
+        }
+
+        .contador {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .nome {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #444;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Logo Claro Brasil -->
-        <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo" class="logo">
-
+        <div class="logo">
+            <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo">
+        </div>
         <h2>Painel ETIT Empresarial</h2>
-
         <div class="input-group">
             <input type="file" id="upload" accept=".xlsx">
         </div>
-
-        <div class="input-group">
-            <input type="text" id="login" placeholder="Digite o login ou nome">
-            <button class="botao" onclick="consultarSLA()">Consultar</button>
-        </div>
-
-        <!-- Nome do colaborador -->
-        <h3 id="nomeColaborador"></h3>
-
         <div class="resultados">
-            <div>
+            <div class="section" id="contadores">
+                <h3>Resultados:</h3>
+                <div id="resultadosMain"></div>
+            </div>
+
+            <div class="section" id="tabelaGanhos">
                 <h3>Dentro do SLA:</h3>
-                <table id="tabelaGanhos">
+                <table>
                     <thead>
-                        <tr><th>Ticket</th><th>Tempo</th></tr>
+                        <tr><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
 
-            <div>
+            <div class="section" id="tabelaPerdas">
                 <h3>Fora do SLA:</h3>
-                <table id="tabelaPerdas">
+                <table>
                     <thead>
-                        <tr><th>Ticket</th><th>Tempo</th></tr>
+                        <tr><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </div>
-
-        <!-- Centraliza as informações de tempo médio -->
-        <div class="tempo-medio-wrapper">
-            <div id="tempoMedioGanhos" class="tempo-medio"></div>
-            <div id="tempoMedioPerdas" class="tempo-medio"></div>
-        </div>
-
-        <div id="contadores" class="contador"></div>
     </div>
 
     <script>
         let dadosPlanilha = [];
-        const colaboradores = {
-            "N6088107": "Leandro Gonçalves de Carvalho",
-            "N5619600": "Bruno Costa Bucard",
-            "N0189105": "Igor Marcelino de Marins",
-            "N5713690": "Gabriela Tavares da Silva",
-            "N5922887": "Romulo Barbosa Nicolae",
-            "F201714": "Fernanda Mesquita de Freitas",
-            "N0125317": "Roberto Silva do Nascimento",
-            "N5819183": "Rodrigo Pires Bernardino",
-            "N5926003": "Suellen Hernandez da Silva",
-            "N5932064": "Monica da Silva Rodrigues"
-        };
 
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -173,64 +171,33 @@
                 const sheet = workbook.Sheets[sheetName];
                 dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-                console.log("Planilha carregada:", dadosPlanilha); // Debug
-                alert("Planilha carregada com sucesso!");
+                processarDados();
             };
             reader.readAsArrayBuffer(file);
         });
 
-        function consultarSLA() {
-            const login = document.getElementById('login').value.trim();
-            if (!login) {
-                alert("Digite um login ou nome!");
-                return;
-            }
-
-            console.log("Consultando para:", login); // Debug
-
+        function processarDados() {
             let ganhos = [];
             let perdas = [];
-            let totalTempoGanhos = 0;
-            let totalTempoPerdas = 0;
 
-            // Atualiza o nome do colaborador, se encontrado
-            const nomeColaborador = colaboradores[login.toUpperCase()];
-            if (nomeColaborador) {
-                document.getElementById('nomeColaborador').innerHTML = `Colaborador: ${nomeColaborador}`;
-            } else {
-                document.getElementById('nomeColaborador').innerHTML = "Colaborador não encontrado!";
-            }
+            dadosPlanilha.forEach((row, index) => {
+                if (index === 0 || row.length < 7) return; // pular cabeçalho e linhas inválidas
 
-            dadosPlanilha.forEach(row => {
-                if (!row || row.length < 5) return; // Ignorar linhas incompletas
+                const ticket = row[0];
+                const volume = Number(row[5]);
+                const indicador = Number(row[6]);
 
-                let ticket = row[0];  // Coluna A - Tickets
-                let usuarioLogin = row[1]?.toString().trim().toLowerCase(); // Coluna B - Logins
-                let usuarioNome = row[2]?.toString().trim().toLowerCase(); // Coluna C - Nomes
-                let sla = row[3]; // Coluna D - SLA (1 dentro, 0 fora)
-                let tempo = parseFloat(row[4]); // Coluna E - Tempo (convertido para número)
-
-                if (usuarioLogin.includes(login.toLowerCase()) || usuarioNome.includes(login.toLowerCase())) {
-                    console.log(`Encontrado: Ticket ${ticket}, SLA: ${sla}, Tempo: ${tempo}`); // Debug
-
-                    if (sla === 1) {
-                        ganhos.push([ticket, tempo]);
-                        totalTempoGanhos += tempo;
-                    } else if (sla === 0) {
-                        perdas.push([ticket, tempo]);
-                        totalTempoPerdas += tempo;
-                    }
+                if (volume === 1 && indicador === 1) {
+                    ganhos.push([ticket, volume, indicador]);
+                } else if (volume === 1 && indicador === 0) {
+                    perdas.push([ticket, volume, indicador]);
                 }
             });
 
-            let mediaGanhos = ganhos.length > 0 ? (totalTempoGanhos / ganhos.length).toFixed(2) : "N/A";
-            let mediaPerdas = perdas.length > 0 ? (totalTempoPerdas / perdas.length).toFixed(2) : "N/A";
-
-            document.getElementById("contadores").innerHTML = 
-                `Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}`;
-
-            document.getElementById("tempoMedioGanhos").innerHTML = `Tempo Médio Dentro do SLA: <b>${mediaGanhos}</b>`;
-            document.getElementById("tempoMedioPerdas").innerHTML = `Tempo Médio Fora do SLA: <b>${mediaPerdas}</b>`;
+            document.getElementById("resultadosMain").innerHTML = `
+                <div><strong>Total Dentro do SLA:</strong> ${ganhos.length}</div>
+                <div><strong>Total Fora do SLA:</strong> ${perdas.length}</div>
+            `;
 
             atualizarTabela("tabelaGanhos", ganhos, "ganho");
             atualizarTabela("tabelaPerdas", perdas, "perda");
@@ -241,10 +208,10 @@
             tabela.innerHTML = "";
             dados.forEach(item => {
                 let row = tabela.insertRow();
-                let cell1 = row.insertCell(0);
-                let cell2 = row.insertCell(1);
-                cell1.innerText = item[0]; // Ticket
-                cell2.innerText = item[1]; // Tempo
+                item.forEach(valor => {
+                    let cell = row.insertCell();
+                    cell.innerText = valor;
+                });
                 row.className = classe;
             });
         }
