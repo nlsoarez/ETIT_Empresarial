@@ -1,220 +1,177 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel ETIT Empresarial</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        /* Estilos mantidos iguais aos anteriores para consistência */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f2f2f2;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .logo img {
-            width: 150px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 24px;
-            color: #D52B1E;
-            margin-bottom: 15px;
-        }
-
-        h3 {
-            font-size: 20px;
-            color: #444;
-            margin-top: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        input, button {
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        input {
-            width: 40%;
-        }
-
-        .botao {
-            background-color: #D52B1E;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .botao:hover {
-            background-color: #B2221A;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #D52B1E;
-            color: white;
-        }
-
-        .ganho {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .perda {
-            background-color: #FF4D4D;
-            color: white;
-        }
-
-        .contador {
-            font-weight: bold;
-            margin-top: 20px;
-        }
-
-        .resultados {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        .section {
-            margin-top: 20px;
-        }
-
-        .nome {
-            font-size: 16px;
-            margin-top: 10px;
-            color: #444;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel ETIT Empresarial</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #D52B1E;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .input-group {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .botao {
+      background-color: #D52B1E;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .botao:hover {
+      background-color: #b11f17;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background-color: #D52B1E;
+      color: white;
+    }
+    .ganho {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .perda {
+      background-color: #FF4D4D;
+      color: white;
+    }
+    #resultadosMain {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo">
-        </div>
-        <h2>Painel ETIT Empresarial</h2>
-        <div class="input-group">
-            <input type="file" id="upload" accept=".xlsx">
-        </div>
-        <div class="resultados">
-            <div class="section" id="contadores">
-                <h3>Resultados:</h3>
-                <div id="resultadosMain"></div>
-            </div>
+  <div class="container">
+    <h2>Painel ETIT Empresarial</h2>
 
-            <div class="section" id="tabelaGanhos">
-                <h3>Dentro do SLA:</h3>
-                <table>
-                    <thead>
-                        <tr><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div class="section" id="tabelaPerdas">
-                <h3>Fora do SLA:</h3>
-                <table>
-                    <thead>
-                        <tr><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+    <div class="input-group">
+      <input type="file" id="upload" accept=".xlsx">
+      <br>
+      <input type="text" id="matriculaInput" placeholder="Digite uma ou mais matrículas (separadas por vírgula)">
+      <button class="botao" onclick="filtrarPorMatricula()">Consultar</button>
     </div>
 
-    <script>
-        let dadosPlanilha = [];
+    <div id="resultadosMain"></div>
 
-        document.getElementById('upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    <div id="tabelaResultadosGanhos">
+      <h3>Dentro do SLA (Ganho)</h3>
+      <table>
+        <thead>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-                processarDados();
-            };
-            reader.readAsArrayBuffer(file);
+    <div id="tabelaResultadosPerdas">
+      <h3>Fora do SLA (Perda)</h3>
+      <table>
+        <thead>
+          <tr><th>Matrícula</th><th>Ticket</th><th>Volume</th><th>Indicador</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let dadosPlanilha = [];
+
+    document.getElementById('upload').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        alert("Arquivo carregado com sucesso. Agora insira a matrícula para consulta.");
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function filtrarPorMatricula() {
+      const matriculasDigitadas = document.getElementById('matriculaInput').value
+        .split(',')
+        .map(m => m.trim());
+
+      const ganhos = [];
+      const perdas = [];
+
+      dadosPlanilha.forEach((linha, index) => {
+        if (index === 0 || linha.length < 7) return;
+
+        const ticket = linha[0];
+        const matricula = String(linha[1]).trim();
+        const volume = Number(linha[5]);
+        const indicador = Number(linha[6]);
+
+        if (!matriculasDigitadas.includes(matricula)) return;
+
+        if (volume === 1 && indicador === 1) {
+          ganhos.push([matricula, ticket, volume, indicador]);
+        } else if (volume === 1 && indicador === 0) {
+          perdas.push([matricula, ticket, volume, indicador]);
+        }
+      });
+
+      document.getElementById("resultadosMain").innerHTML = `
+        <h4>Total Dentro do SLA: ${ganhos.length} | Total Fora do SLA: ${perdas.length}</h4>
+      `;
+
+      preencherTabela("tabelaResultadosGanhos", ganhos, "ganho");
+      preencherTabela("tabelaResultadosPerdas", perdas, "perda");
+    }
+
+    function preencherTabela(id, dados, classe) {
+      const tbody = document.querySelector(`#${id} tbody`);
+      tbody.innerHTML = "";
+      dados.forEach(linha => {
+        const tr = document.createElement("tr");
+        tr.className = classe;
+        linha.forEach(valor => {
+          const td = document.createElement("td");
+          td.textContent = valor;
+          tr.appendChild(td);
         });
-
-        function processarDados() {
-            let ganhos = [];
-            let perdas = [];
-
-            dadosPlanilha.forEach((row, index) => {
-                if (index === 0 || row.length < 7) return; // pular cabeçalho e linhas inválidas
-
-                const ticket = row[0];
-                const volume = Number(row[5]);
-                const indicador = Number(row[6]);
-
-                if (volume === 1 && indicador === 1) {
-                    ganhos.push([ticket, volume, indicador]);
-                } else if (volume === 1 && indicador === 0) {
-                    perdas.push([ticket, volume, indicador]);
-                }
-            });
-
-            document.getElementById("resultadosMain").innerHTML = `
-                <div><strong>Total Dentro do SLA:</strong> ${ganhos.length}</div>
-                <div><strong>Total Fora do SLA:</strong> ${perdas.length}</div>
-            `;
-
-            atualizarTabela("tabelaGanhos", ganhos, "ganho");
-            atualizarTabela("tabelaPerdas", perdas, "perda");
-        }
-
-        function atualizarTabela(idTabela, dados, classe) {
-            const tabela = document.getElementById(idTabela).getElementsByTagName("tbody")[0];
-            tabela.innerHTML = "";
-            dados.forEach(item => {
-                let row = tabela.insertRow();
-                item.forEach(valor => {
-                    let cell = row.insertCell();
-                    cell.innerText = valor;
-                });
-                row.className = classe;
-            });
-        }
-    </script>
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
 </body>
 </html>
