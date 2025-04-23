@@ -49,7 +49,7 @@
             flex-wrap: wrap;
         }
 
-        input, button {
+        input, button, select {
             padding: 12px;
             font-size: 16px;
             border-radius: 5px;
@@ -187,6 +187,10 @@
             display: none;
         }
 
+        .filtro-tipo {
+            margin: 15px 0;
+        }
+
         @media (max-width: 600px) {
             .container {
                 margin: 20px auto;
@@ -198,7 +202,7 @@
                 align-items: center;
             }
             
-            input, button {
+            input, button, select {
                 width: 100%;
             }
         }
@@ -221,6 +225,14 @@
             <button class="botao" id="consultarBtn" onclick="consultar()" disabled>Consultar</button>
         </div>
 
+        <div class="filtro-tipo">
+            <select id="filtroTipo" class="botao">
+                <option value="todos">Todos os tipos</option>
+                <option value="rec">Rec</option>
+                <option value="ral">Ral</option>
+            </select>
+        </div>
+
         <div id="nomeUsuario" class="nome hidden"></div>
         <div id="statsContainer" class="stats-container hidden">
             <div class="stats-row">
@@ -236,7 +248,7 @@
                 <h3>Dentro do SLA:</h3>
                 <table>
                     <thead>
-                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
+                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th><th>Tipo</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -246,7 +258,7 @@
                 <h3>Fora do SLA:</h3>
                 <table>
                     <thead>
-                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
+                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th><th>Tipo</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -331,6 +343,7 @@
             document.getElementById("nomeUsuario").innerHTML = `Consultor: ${nomeUsuario}`;
             document.getElementById("nomeUsuario").classList.remove("hidden");
 
+            const tipoSelecionado = document.getElementById("filtroTipo").value;
             const dentroSLA = [];
             const foraSLA = [];
             let totalDentroSLA = 0;
@@ -338,22 +351,28 @@
 
             for (let i = 1; i < dadosPlanilha.length; i++) {
                 const row = dadosPlanilha[i];
-                if (!row || row.length < 7) continue;
+                if (!row || row.length < 8) continue;
 
                 const ticket = row[0]?.toString().trim() || "N/A";
                 const usuarioLogin = row[1]?.toString().trim().toUpperCase();
                 const tempoRaw = parseFloat(row[4]) || 0; // Coluna E
                 const volume = parseInt(row[5]) || 0;     // Coluna F
                 const indicador = parseInt(row[6]) || 0;  // Coluna G
+                const tipo = row[7]?.toString().trim().toLowerCase() || ""; // Coluna H
+
+                // Aplicar filtro de tipo
+                if (tipoSelecionado !== "todos" && tipo !== tipoSelecionado) {
+                    continue;
+                }
 
                 if (usuarioLogin && usuarioLogin.includes(login)) {
                     const tempoMinutos = Math.round(tempoRaw * 1440);
                     
                     if (volume === 1 && indicador === 1) {
-                        dentroSLA.push({ ticket, tempo: tempoMinutos, status: "Dentro do SLA" });
+                        dentroSLA.push({ ticket, tempo: tempoMinutos, status: "Dentro do SLA", tipo });
                         totalDentroSLA += tempoMinutos;
                     } else if (volume === 1 && indicador === 0) {
-                        foraSLA.push({ ticket, tempo: tempoMinutos, status: "Fora do SLA" });
+                        foraSLA.push({ ticket, tempo: tempoMinutos, status: "Fora do SLA", tipo });
                         totalForaSLA += tempoMinutos;
                     }
                 }
@@ -376,7 +395,7 @@
             if (dentroSLA.length === 0) {
                 const row = tabelaDentroSLA.insertRow();
                 const cell = row.insertCell(0);
-                cell.colSpan = 3;
+                cell.colSpan = 4;
                 cell.innerText = "Nenhum ticket encontrado";
                 cell.style.textAlign = "center";
             } else {
@@ -386,6 +405,7 @@
                     row.insertCell(0).innerText = item.ticket;
                     row.insertCell(1).innerText = item.tempo.toLocaleString();
                     row.insertCell(2).innerText = item.status;
+                    row.insertCell(3).innerText = item.tipo.toUpperCase();
                 });
             }
 
@@ -396,7 +416,7 @@
             if (foraSLA.length === 0) {
                 const row = tabelaForaSLA.insertRow();
                 const cell = row.insertCell(0);
-                cell.colSpan = 3;
+                cell.colSpan = 4;
                 cell.innerText = "Nenhum ticket encontrado";
                 cell.style.textAlign = "center";
             } else {
@@ -406,6 +426,7 @@
                     row.insertCell(0).innerText = item.ticket;
                     row.insertCell(1).innerText = item.tempo.toLocaleString();
                     row.insertCell(2).innerText = item.status;
+                    row.insertCell(3).innerText = item.tipo.toUpperCase();
                 });
             }
 
