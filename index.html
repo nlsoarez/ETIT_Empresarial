@@ -78,7 +78,8 @@
         }
 
         th, td {
-            padding: 8px;
+            padding: 12px;
+            font-size: 15px;
             text-align: center;
             border: 1px solid #ddd;
         }
@@ -103,6 +104,13 @@
             margin-top: 10px;
             color: #444;
         }
+
+        #loading {
+            display: none;
+            font-size: 18px;
+            color: #D52B1E;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -115,6 +123,8 @@
         <div class="input-group">
             <input type="file" id="upload" accept=".xlsx">
         </div>
+
+        <div id="loading">Carregando...</div>
 
         <div class="input-group">
             <input type="text" id="login" placeholder="Digite o login">
@@ -134,6 +144,8 @@
                 </table>
             </div>
         </div>
+
+        <button class="botao" onclick="exportarResultados()">Exportar</button>
     </div>
 
     <script>
@@ -157,6 +169,11 @@
 
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
+            if (!file.name.endsWith('.xlsx')) {
+                alert('Por favor, envie um arquivo .xlsx válido.');
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
@@ -180,6 +197,8 @@
             document.getElementById("nomeUsuario").innerHTML = `Nome: ${nomeUsuario}`;
 
             const resultados = [];
+            document.getElementById("loading").style.display = "block";  // Exibe o carregamento
+
             dadosPlanilha.forEach((row, index) => {
                 if (index === 0 || !row || row.length < 7) return;
 
@@ -206,6 +225,7 @@
             });
 
             atualizarTabelaResultados(resultados);
+            document.getElementById("loading").style.display = "none"; // Esconde o carregamento
         }
 
         function atualizarTabelaResultados(dados) {
@@ -218,6 +238,17 @@
                 row.insertCell(1).innerText = item.tempo;
                 row.insertCell(2).innerText = item.status;
             });
+        }
+
+        function exportarResultados() {
+            const wb = XLSX.utils.book_new();
+            const ws_data = [["Ticket", "Tempo (min)", "Status"]];
+            dadosPlanilha.forEach(d => {
+                ws_data.push([d.ticket, d.tempo, d.status]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+            XLSX.writeFile(wb, "resultados_sla.xlsx");
         }
     </script>
 </body>
