@@ -46,6 +46,7 @@
             justify-content: center;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
 
         input, button {
@@ -53,10 +54,12 @@
             font-size: 16px;
             border-radius: 5px;
             border: 1px solid #ccc;
+            box-sizing: border-box;
         }
 
         input {
-            width: 40%;
+            width: 250px;
+            max-width: 100%;
         }
 
         .botao {
@@ -65,10 +68,17 @@
             border: none;
             cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.3s;
+            min-width: 120px;
         }
 
         .botao:hover {
             background-color: #B2221A;
+        }
+
+        .botao:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
 
         table {
@@ -78,7 +88,7 @@
         }
 
         th, td {
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             border: 1px solid #ddd;
         }
@@ -86,6 +96,8 @@
         th {
             background-color: #D52B1E;
             color: white;
+            position: sticky;
+            top: 0;
         }
 
         .ganho {
@@ -100,8 +112,9 @@
 
         .nome {
             font-size: 16px;
-            margin-top: 10px;
+            margin: 10px 0;
             color: #444;
+            font-weight: bold;
         }
 
         .resultados {
@@ -110,6 +123,72 @@
 
         .tabela-container {
             margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .stats {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #D52B1E;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 12px;
+            background-color: #D52B1E;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .file-input-label:hover {
+            background-color: #B2221A;
+        }
+
+        #upload {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px auto;
+                padding: 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            input, button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -121,17 +200,20 @@
         <h2>Painel ETIT Empresarial</h2>
 
         <div class="input-group">
-            <input type="file" id="upload" accept=".xlsx">
+            <label for="upload" class="file-input-label">Selecionar Planilha</label>
+            <input type="file" id="upload" accept=".xlsx, .xls">
         </div>
 
         <div class="input-group">
-            <input type="text" id="login" placeholder="Digite o login">
-            <button class="botao" onclick="consultar()">Consultar</button>
+            <input type="text" id="login" placeholder="Digite o login" autocomplete="off">
+            <button class="botao" id="consultarBtn" onclick="consultar()" disabled>Consultar</button>
         </div>
 
-        <div id="nomeUsuario" class="nome"></div>
+        <div id="nomeUsuario" class="nome hidden"></div>
 
-        <div class="resultados">
+        <div id="loading" class="loading hidden"></div>
+
+        <div class="resultados" id="resultados" style="display: none;">
             <div class="tabela-container" id="tabelaDentroSLA">
                 <h3>Dentro do SLA:</h3>
                 <table>
@@ -140,7 +222,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <p id="mediaDentroSLA"></p>
+                <div class="stats" id="statsDentroSLA"></div>
             </div>
 
             <div class="tabela-container" id="tabelaForaSLA">
@@ -151,13 +233,14 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <p id="mediaForaSLA"></p>
+                <div class="stats" id="statsForaSLA"></div>
             </div>
         </div>
     </div>
 
     <script>
         let dadosPlanilha = [];
+        let fileName = "";
 
         const loginToName = {
             "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
@@ -175,92 +258,162 @@
 
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
+            if (!file) return;
+            
+            fileName = file.name;
+            document.getElementById('consultarBtn').disabled = true;
+            document.getElementById('loading').classList.remove('hidden');
+            
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                alert("Planilha carregada com sucesso!");
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    document.getElementById('consultarBtn').disabled = false;
+                    document.getElementById('loading').classList.add('hidden');
+                    alert(`Planilha "${fileName}" carregada com sucesso!`);
+                } catch (error) {
+                    alert("Erro ao processar a planilha. Verifique o formato do arquivo.");
+                    console.error(error);
+                    document.getElementById('loading').classList.add('hidden');
+                }
+            };
+            reader.onerror = function() {
+                alert("Erro ao ler o arquivo. Tente novamente.");
+                document.getElementById('loading').classList.add('hidden');
             };
             reader.readAsArrayBuffer(file);
         });
 
         function consultar() {
-            const login = document.getElementById('login').value.trim().toLowerCase();
+            const login = document.getElementById('login').value.trim().toUpperCase();
             if (!login) {
                 alert("Digite um login!");
                 return;
             }
 
-            const nomeUsuario = loginToName[login.toUpperCase()] || "Nome não encontrado";
-            document.getElementById("nomeUsuario").innerHTML = `Nome: ${nomeUsuario}`;
+            if (dadosPlanilha.length === 0) {
+                alert("Por favor, carregue uma planilha primeiro!");
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('resultados').style.display = 'none';
+            
+            // Simulate processing delay for better UX
+            setTimeout(() => {
+                processData(login);
+            }, 100);
+        }
+
+        function processData(login) {
+            const nomeUsuario = loginToName[login] || "Nome não encontrado";
+            document.getElementById("nomeUsuario").innerHTML = `Consultor: ${nomeUsuario}`;
+            document.getElementById("nomeUsuario").classList.remove("hidden");
 
             const dentroSLA = [];
             const foraSLA = [];
             let totalDentroSLA = 0;
             let totalForaSLA = 0;
 
-            dadosPlanilha.forEach((row, index) => {
-                if (index === 0 || !row || row.length < 7) return;
+            for (let i = 1; i < dadosPlanilha.length; i++) {
+                const row = dadosPlanilha[i];
+                if (!row || row.length < 7) continue;
 
-                const ticket = row[0];
-                const usuarioLogin = row[1]?.toString().trim().toLowerCase();
-                const tempoRaw = parseFloat(row[4]); // Coluna E
-                const volume = parseInt(row[5]);     // Coluna F
-                const indicador = parseInt(row[6]);  // Coluna G
+                const ticket = row[0]?.toString().trim() || "N/A";
+                const usuarioLogin = row[1]?.toString().trim().toUpperCase();
+                const tempoRaw = parseFloat(row[4]) || 0; // Coluna E
+                const volume = parseInt(row[5]) || 0;     // Coluna F
+                const indicador = parseInt(row[6]) || 0;  // Coluna G
 
                 if (usuarioLogin && usuarioLogin.includes(login)) {
                     const tempoMinutos = Math.round(tempoRaw * 1440);
-                    let status = "Ignorado";
-
+                    
                     if (volume === 1 && indicador === 1) {
-                        status = "Dentro do SLA";
-                        dentroSLA.push({ ticket, tempo: tempoMinutos, status });
+                        dentroSLA.push({ ticket, tempo: tempoMinutos, status: "Dentro do SLA" });
                         totalDentroSLA += tempoMinutos;
                     } else if (volume === 1 && indicador === 0) {
-                        status = "Fora do SLA";
-                        foraSLA.push({ ticket, tempo: tempoMinutos, status });
+                        foraSLA.push({ ticket, tempo: tempoMinutos, status: "Fora do SLA" });
                         totalForaSLA += tempoMinutos;
-                    } else {
-                        return; // ignora outros casos
                     }
                 }
-            });
+            }
 
             atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA);
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('resultados').style.display = 'block';
         }
 
         function atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA) {
+            // Ordena por tempo (decrescente)
+            dentroSLA.sort((a, b) => b.tempo - a.tempo);
+            foraSLA.sort((a, b) => b.tempo - a.tempo);
+
             // Atualiza tabela Dentro do SLA
             const tabelaDentroSLA = document.getElementById("tabelaDentroSLA").getElementsByTagName("tbody")[0];
             tabelaDentroSLA.innerHTML = "";
-            dentroSLA.forEach(item => {
+            
+            if (dentroSLA.length === 0) {
                 const row = tabelaDentroSLA.insertRow();
-                row.className = "ganho";
-                row.insertCell(0).innerText = item.ticket;
-                row.insertCell(1).innerText = item.tempo;
-                row.insertCell(2).innerText = item.status;
-            });
+                const cell = row.insertCell(0);
+                cell.colSpan = 3;
+                cell.innerText = "Nenhum ticket encontrado";
+                cell.style.textAlign = "center";
+            } else {
+                dentroSLA.forEach(item => {
+                    const row = tabelaDentroSLA.insertRow();
+                    row.className = "ganho";
+                    row.insertCell(0).innerText = item.ticket;
+                    row.insertCell(1).innerText = item.tempo.toLocaleString();
+                    row.insertCell(2).innerText = item.status;
+                });
+            }
 
-            const mediaDentroSLA = totalDentroSLA / dentroSLA.length || 0;
-            document.getElementById("mediaDentroSLA").innerText = `Tempo médio Dentro do SLA: ${mediaDentroSLA.toFixed(2)} minutos`;
+            const mediaDentroSLA = dentroSLA.length > 0 ? (totalDentroSLA / dentroSLA.length) : 0;
+            document.getElementById("statsDentroSLA").innerHTML = `
+                Tickets: ${dentroSLA.length} | 
+                Tempo total: ${totalDentroSLA.toLocaleString()} min | 
+                Média: ${mediaDentroSLA.toFixed(2)} min
+            `;
 
             // Atualiza tabela Fora do SLA
             const tabelaForaSLA = document.getElementById("tabelaForaSLA").getElementsByTagName("tbody")[0];
             tabelaForaSLA.innerHTML = "";
-            foraSLA.forEach(item => {
+            
+            if (foraSLA.length === 0) {
                 const row = tabelaForaSLA.insertRow();
-                row.className = "perda";
-                row.insertCell(0).innerText = item.ticket;
-                row.insertCell(1).innerText = item.tempo;
-                row.insertCell(2).innerText = item.status;
-            });
+                const cell = row.insertCell(0);
+                cell.colSpan = 3;
+                cell.innerText = "Nenhum ticket encontrado";
+                cell.style.textAlign = "center";
+            } else {
+                foraSLA.forEach(item => {
+                    const row = tabelaForaSLA.insertRow();
+                    row.className = "perda";
+                    row.insertCell(0).innerText = item.ticket;
+                    row.insertCell(1).innerText = item.tempo.toLocaleString();
+                    row.insertCell(2).innerText = item.status;
+                });
+            }
 
-            const mediaForaSLA = totalForaSLA / foraSLA.length || 0;
-            document.getElementById("mediaForaSLA").innerText = `Tempo médio Fora do SLA: ${mediaForaSLA.toFixed(2)} minutos`;
+            const mediaForaSLA = foraSLA.length > 0 ? (totalForaSLA / foraSLA.length) : 0;
+            document.getElementById("statsForaSLA").innerHTML = `
+                Tickets: ${foraSLA.length} | 
+                Tempo total: ${totalForaSLA.toLocaleString()} min | 
+                Média: ${mediaForaSLA.toFixed(2)} min
+            `;
         }
+
+        // Enable consult button when both file and login are provided
+        document.getElementById('login').addEventListener('input', function() {
+            const login = this.value.trim();
+            const hasFile = dadosPlanilha.length > 0;
+            document.getElementById('consultarBtn').disabled = !(login && hasFile);
+        });
     </script>
 </body>
 </html>
