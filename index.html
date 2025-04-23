@@ -78,8 +78,7 @@
         }
 
         th, td {
-            padding: 12px;
-            font-size: 15px;
+            padding: 8px;
             text-align: center;
             border: 1px solid #ddd;
         }
@@ -105,10 +104,11 @@
             color: #444;
         }
 
-        #loading {
-            display: none;
-            font-size: 18px;
-            color: #D52B1E;
+        .resultados {
+            margin-top: 30px;
+        }
+
+        .tabela-container {
             margin-top: 20px;
         }
     </style>
@@ -124,8 +124,6 @@
             <input type="file" id="upload" accept=".xlsx">
         </div>
 
-        <div id="loading">Carregando...</div>
-
         <div class="input-group">
             <input type="text" id="login" placeholder="Digite o login">
             <button class="botao" onclick="consultar()">Consultar</button>
@@ -134,42 +132,49 @@
         <div id="nomeUsuario" class="nome"></div>
 
         <div class="resultados">
-            <div class="section" id="tabelaResultados">
-                <h3>Resultados:</h3>
+            <div class="tabela-container" id="tabelaDentroSLA">
+                <h3>Dentro do SLA:</h3>
                 <table>
                     <thead>
                         <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+                <p id="mediaDentroSLA"></p>
+            </div>
+
+            <div class="tabela-container" id="tabelaForaSLA">
+                <h3>Fora do SLA:</h3>
+                <table>
+                    <thead>
+                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <p id="mediaForaSLA"></p>
             </div>
         </div>
-
-        <button class="botao" onclick="exportarResultados()">Exportar</button>
     </div>
 
     <script>
         let dadosPlanilha = [];
+
         const loginToName = {
-    "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
-    "N5619600": "BRUNO COSTA BUCARD",
-    "N0189105": "IGOR MARCELINO DE MARINS",
-    "N5713690": "GABRIELA TAVARES DA SILVA",
-    "N5802257": "MAGNO FERRAREZ DE MORAIS",
-    "N5604148": "DANIEL MARCELO FELISBERTO OLIVEIRA",
-    "F201714": "FERNANDA MESQUITA DE FREITAS",
-    "N0125317": "ROBERTO SILVA DO NASCIMENTO",
-    "N5819183": "RODRIGO PIRES BERNARDINO",
-    "N5926003": "SUELLEN HERNANDEZ DA SILVA",
-    "N5932064": "MONICA DA SILVA RODRIGUES"
-};
+            "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
+            "N5619600": "BRUNO COSTA BUCARD",
+            "N0189105": "IGOR MARCELINO DE MARINS",
+            "N5713690": "GABRIELA TAVARES DA SILVA",
+            "N5802257": "MAGNO FERRAREZ DE MORAIS",
+            "N5604148": "DANIEL MARCELO FELISBERTO OLIVEIRA",
+            "F201714": "FERNANDA MESQUITA DE FREITAS",
+            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
+            "N5819183": "RODRIGO PIRES BERNARDINO",
+            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
+            "N5932064": "MONICA DA SILVA RODRIGUES"
+        };
+
         document.getElementById('upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
-            if (!file.name.endsWith('.xlsx')) {
-                alert('Por favor, envie um arquivo .xlsx válido.');
-                return;
-            }
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
@@ -192,8 +197,10 @@
             const nomeUsuario = loginToName[login.toUpperCase()] || "Nome não encontrado";
             document.getElementById("nomeUsuario").innerHTML = `Nome: ${nomeUsuario}`;
 
-            const resultados = [];
-            document.getElementById("loading").style.display = "block";  // Exibe o carregamento
+            const dentroSLA = [];
+            const foraSLA = [];
+            let totalDentroSLA = 0;
+            let totalForaSLA = 0;
 
             dadosPlanilha.forEach((row, index) => {
                 if (index === 0 || !row || row.length < 7) return;
@@ -210,41 +217,49 @@
 
                     if (volume === 1 && indicador === 1) {
                         status = "Dentro do SLA";
+                        dentroSLA.push({ ticket, tempo: tempoMinutos, status });
+                        totalDentroSLA += tempoMinutos;
                     } else if (volume === 1 && indicador === 0) {
                         status = "Fora do SLA";
+                        foraSLA.push({ ticket, tempo: tempoMinutos, status });
+                        totalForaSLA += tempoMinutos;
                     } else {
                         return; // ignora outros casos
                     }
-
-                    resultados.push({ ticket, tempo: tempoMinutos, status });
                 }
             });
 
-            atualizarTabelaResultados(resultados);
-            document.getElementById("loading").style.display = "none"; // Esconde o carregamento
+            atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA);
         }
 
-        function atualizarTabelaResultados(dados) {
-            const tabela = document.getElementById("tabelaResultados").getElementsByTagName("tbody")[0];
-            tabela.innerHTML = "";
-            dados.forEach(item => {
-                const row = tabela.insertRow();
-                row.className = item.status === "Dentro do SLA" ? "ganho" : "perda";
+        function atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA) {
+            // Atualiza tabela Dentro do SLA
+            const tabelaDentroSLA = document.getElementById("tabelaDentroSLA").getElementsByTagName("tbody")[0];
+            tabelaDentroSLA.innerHTML = "";
+            dentroSLA.forEach(item => {
+                const row = tabelaDentroSLA.insertRow();
+                row.className = "ganho";
                 row.insertCell(0).innerText = item.ticket;
                 row.insertCell(1).innerText = item.tempo;
                 row.insertCell(2).innerText = item.status;
             });
-        }
 
-        function exportarResultados() {
-            const wb = XLSX.utils.book_new();
-            const ws_data = [["Ticket", "Tempo (min)", "Status"]];
-            dadosPlanilha.forEach(d => {
-                ws_data.push([d.ticket, d.tempo, d.status]);
+            const mediaDentroSLA = totalDentroSLA / dentroSLA.length || 0;
+            document.getElementById("mediaDentroSLA").innerText = `Tempo médio Dentro do SLA: ${mediaDentroSLA.toFixed(2)} minutos`;
+
+            // Atualiza tabela Fora do SLA
+            const tabelaForaSLA = document.getElementById("tabelaForaSLA").getElementsByTagName("tbody")[0];
+            tabelaForaSLA.innerHTML = "";
+            foraSLA.forEach(item => {
+                const row = tabelaForaSLA.insertRow();
+                row.className = "perda";
+                row.insertCell(0).innerText = item.ticket;
+                row.insertCell(1).innerText = item.tempo;
+                row.insertCell(2).innerText = item.status;
             });
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            XLSX.utils.book_append_sheet(wb, ws, "Resultados");
-            XLSX.writeFile(wb, "resultados_sla.xlsx");
+
+            const mediaForaSLA = totalForaSLA / foraSLA.length || 0;
+            document.getElementById("mediaForaSLA").innerText = `Tempo médio Fora do SLA: ${mediaForaSLA.toFixed(2)} minutos`;
         }
     </script>
 </body>
