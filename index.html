@@ -112,29 +112,41 @@
 
         .nome {
             font-size: 16px;
-            margin: 10px 0;
+            margin: 10px 0 5px 0;
             color: #444;
             font-weight: bold;
         }
 
         .resultados {
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         .tabela-container {
-            margin-top: 20px;
+            margin-top: 15px;
             max-height: 400px;
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
 
-        .stats {
+        .stats-container {
             background-color: #f8f8f8;
             padding: 10px;
             border-radius: 5px;
-            margin-top: 10px;
+            margin: 5px 0 15px 0;
             font-weight: bold;
+            text-align: center;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .stat-item {
+            margin: 5px;
         }
 
         .hidden {
@@ -210,6 +222,12 @@
         </div>
 
         <div id="nomeUsuario" class="nome hidden"></div>
+        <div id="statsContainer" class="stats-container hidden">
+            <div class="stats-row">
+                <div class="stat-item" id="statsDentroSLA"></div>
+                <div class="stat-item" id="statsForaSLA"></div>
+            </div>
+        </div>
 
         <div id="loading" class="loading hidden"></div>
 
@@ -222,7 +240,6 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <div class="stats" id="statsDentroSLA"></div>
             </div>
 
             <div class="tabela-container" id="tabelaForaSLA">
@@ -233,7 +250,6 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <div class="stats" id="statsForaSLA"></div>
             </div>
         </div>
     </div>
@@ -304,7 +320,7 @@
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('resultados').style.display = 'none';
             
-            // Simulate processing delay for better UX
+            // Simular processamento para melhor UX
             setTimeout(() => {
                 processData(login);
             }, 100);
@@ -373,13 +389,6 @@
                 });
             }
 
-            const mediaDentroSLA = dentroSLA.length > 0 ? (totalDentroSLA / dentroSLA.length) : 0;
-            document.getElementById("statsDentroSLA").innerHTML = `
-                Tickets: ${dentroSLA.length} | 
-                Tempo total: ${totalDentroSLA.toLocaleString()} min | 
-                Média: ${mediaDentroSLA.toFixed(2)} min
-            `;
-
             // Atualiza tabela Fora do SLA
             const tabelaForaSLA = document.getElementById("tabelaForaSLA").getElementsByTagName("tbody")[0];
             tabelaForaSLA.innerHTML = "";
@@ -400,15 +409,26 @@
                 });
             }
 
+            // Atualiza estatísticas
+            const mediaDentroSLA = dentroSLA.length > 0 ? (totalDentroSLA / dentroSLA.length) : 0;
             const mediaForaSLA = foraSLA.length > 0 ? (totalForaSLA / foraSLA.length) : 0;
+
+            document.getElementById("statsDentroSLA").innerHTML = `
+                Dentro SLA: ${dentroSLA.length} tickets | 
+                ${totalDentroSLA.toLocaleString()} min | 
+                Média: ${mediaDentroSLA.toFixed(2)} min
+            `;
+
             document.getElementById("statsForaSLA").innerHTML = `
-                Tickets: ${foraSLA.length} | 
-                Tempo total: ${totalForaSLA.toLocaleString()} min | 
+                Fora SLA: ${foraSLA.length} tickets | 
+                ${totalForaSLA.toLocaleString()} min | 
                 Média: ${mediaForaSLA.toFixed(2)} min
             `;
+
+            document.getElementById("statsContainer").classList.remove("hidden");
         }
 
-        // Enable consult button when both file and login are provided
+        // Ativar botão quando ambos os campos estiverem preenchidos
         document.getElementById('login').addEventListener('input', function() {
             const login = this.value.trim();
             const hasFile = dadosPlanilha.length > 0;
