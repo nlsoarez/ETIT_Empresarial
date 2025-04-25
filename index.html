@@ -1,439 +1,642 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta SLA Empresarial</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f2f2f2;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .logo img {
-            width: 150px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 24px;
-            color: #D52B1E;
-            margin-bottom: 15px;
-        }
-
-        h3 {
-            font-size: 20px;
-            color: #444;
-            margin-top: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        input, button {
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        input {
-            width: 250px;
-            max-width: 100%;
-        }
-
-        .botao {
-            background-color: #D52B1E;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            min-width: 120px;
-        }
-
-        .botao:hover {
-            background-color: #B2221A;
-        }
-
-        .botao:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #D52B1E;
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-
-        .ganho {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .perda {
-            background-color: #FF4D4D;
-            color: white;
-        }
-
-        .nome {
-            font-size: 16px;
-            margin: 10px 0 5px 0;
-            color: #444;
-            font-weight: bold;
-        }
-
-        .resultados {
-            margin-top: 20px;
-        }
-
-        .tabela-container {
-            margin-top: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .stats-container {
-            background-color: #f8f8f8;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 5px 0 15px 0;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .stats-row {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin-top: 5px;
-        }
-
-        .stat-item {
-            margin: 5px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .loading {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #D52B1E;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .file-input-label {
-            display: inline-block;
-            padding: 12px;
-            background-color: #D52B1E;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-
-        .file-input-label:hover {
-            background-color: #B2221A;
-        }
-
-        #upload {
-            display: none;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                margin: 20px auto;
-                padding: 15px;
-            }
-            
-            .input-group {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            input, button {
-                width: 100%;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel SLA - Consulta por Matrícula</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #e60000;
+      text-align: center;
+    }
+    .input-group {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    input, button, select {
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #e60000;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #c50000;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #resultadosContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .resultado-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 300px;
+    }
+    .sla-status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    .sla-dentro {
+      color: #2ecc71;
+      font-weight: bold;
+    }
+    .sla-fora {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    details {
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+    summary {
+      font-weight: bold;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #e60000;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #ddd;
+      margin-right: 5px;
+      border-radius: 4px 4px 0 0;
+    }
+    .tab.active {
+      background: #e60000;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .chart-container {
+      height: 300px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://www.eventos.momentoeditorial.com.br/wp-content/uploads/2020/07/logo-Claro-800x600px.png" alt="Claro Brasil Logo">
-        </div>
-        <h2>Painel ETIT Empresarial</h2>
+  <div class="container">
+    <h1>Painel de Consulta SLA - ETIT Residencial</h1>
 
-        <div class="input-group">
-            <label for="upload" class="file-input-label">Selecionar Planilha</label>
-            <input type="file" id="upload" accept=".xlsx, .xls">
-        </div>
-
-        <div class="input-group">
-            <input type="text" id="login" placeholder="Digite o login" autocomplete="off">
-            <button class="botao" id="consultarBtn" onclick="consultar()" disabled>Consultar</button>
-        </div>
-
-        <div id="nomeUsuario" class="nome hidden"></div>
-        <div id="statsContainer" class="stats-container hidden">
-            <div class="stats-row">
-                <div class="stat-item" id="statsDentroSLA"></div>
-                <div class="stat-item" id="statsForaSLA"></div>
-            </div>
-        </div>
-
-        <div id="loading" class="loading hidden"></div>
-
-        <div class="resultados" id="resultados" style="display: none;">
-            <div class="tabela-container" id="tabelaDentroSLA">
-                <h3>Dentro do SLA:</h3>
-                <table>
-                    <thead>
-                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div class="tabela-container" id="tabelaForaSLA">
-                <h3>Fora do SLA:</h3>
-                <table>
-                    <thead>
-                        <tr><th>Ticket</th><th>Tempo (min)</th><th>Status</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+    <div class="input-group">
+      <div>
+        <label for="arquivoExcel">Selecione o arquivo Excel:</label>
+        <input type="file" id="arquivoExcel" accept=".xlsx,.xls" />
+      </div>
+      <div>
+        <label for="matricula">Matrícula:</label>
+        <input type="text" id="matricula" placeholder="Digite a matrícula" />
+      </div>
+      <div>
+        <label for="dataInicio">Período inicial (opcional):</label>
+        <input type="date" id="dataInicio" />
+      </div>
+      <div>
+        <label for="dataFim">Período final (opcional):</label>
+        <input type="date" id="dataFim" />
+      </div>
+      <div>
+        <label for="tipoConsulta">Tipo de consulta:</label>
+        <select id="tipoConsulta">
+          <option value="ambos">Ambos (RAL e REC)</option>
+          <option value="ral">Somente RAL</option>
+          <option value="rec">Somente REC</option>
+        </select>
+      </div>
+      <button id="btnConsultar" onclick="processarArquivo()">Consultar</button>
+      <button id="btnExportar" onclick="exportarResultados()" disabled>Exportar Resultados</button>
     </div>
 
-    <script>
-        let dadosPlanilha = [];
-        let fileName = "";
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Processando arquivo...</p>
+    </div>
 
-        const loginToName = {
-            "N6088107": "LEANDRO GONÇALVES DE CARVALHO",
-            "N5619600": "BRUNO COSTA BUCARD",
-            "N0189105": "IGOR MARCELINO DE MARINS",
-            "N5713690": "GABRIELA TAVARES DA SILVA",
-            "N5802257": "MAGNO FERRAREZ DE MORAIS",
-            "N5604148": "DANIEL MARCELO FELISBERTO OLIVEIRA",
-            "F201714": "FERNANDA MESQUITA DE FREITAS",
-            "N0125317": "ROBERTO SILVA DO NASCIMENTO",
-            "N5819183": "RODRIGO PIRES BERNARDINO",
-            "N5926003": "SUELLEN HERNANDEZ DA SILVA",
-            "N5932064": "MONICA DA SILVA RODRIGUES"
-        };
+    <div id="resultadosContainer"></div>
+  </div>
 
-        document.getElementById('upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            fileName = file.name;
-            document.getElementById('consultarBtn').disabled = true;
-            document.getElementById('loading').classList.remove('hidden');
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    dadosPlanilha = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    
-                    document.getElementById('consultarBtn').disabled = false;
-                    document.getElementById('loading').classList.add('hidden');
-                    alert(`Planilha "${fileName}" carregada com sucesso!`);
-                } catch (error) {
-                    alert("Erro ao processar a planilha. Verifique o formato do arquivo.");
-                    console.error(error);
-                    document.getElementById('loading').classList.add('hidden');
-                }
-            };
-            reader.onerror = function() {
-                alert("Erro ao ler o arquivo. Tente novamente.");
-                document.getElementById('loading').classList.add('hidden');
-            };
-            reader.readAsArrayBuffer(file);
-        });
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let workbookGlobal;
+    let resultadosAtuais = {};
 
-        function consultar() {
-            const login = document.getElementById('login').value.trim().toUpperCase();
-            if (!login) {
-                alert("Digite um login!");
+    document.getElementById('arquivoExcel').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        // Validação do tipo de arquivo
+        if (!file.name.match(/\.(xlsx|xls)$/i)) {
+          alert('Por favor, selecione um arquivo Excel válido (.xlsx ou .xls)');
+          e.target.value = '';
+          return;
+        }
+        
+        // Validação do tamanho do arquivo (limite de 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('O arquivo é muito grande. Por favor, selecione um arquivo menor que 5MB.');
+          e.target.value = '';
+          return;
+        }
+      }
+    });
+
+    function processarArquivo() {
+      const fileInput = document.getElementById("arquivoExcel");
+      const matricula = document.getElementById("matricula").value.trim();
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+      const tipoConsulta = document.getElementById("tipoConsulta").value;
+
+      if (!fileInput.files.length) {
+        alert("Selecione um arquivo para continuar.");
+        return;
+      }
+
+      if (!matricula) {
+        alert("Digite a matrícula para consultar.");
+        return;
+      }
+
+      // Mostra o indicador de carregamento
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("btnConsultar").disabled = true;
+
+      // Processamento assíncrono para não travar a interface
+      setTimeout(() => {
+        try {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              workbookGlobal = workbook;
+
+              const sheetName = workbook.SheetNames[0];
+              const sheet = workbook.Sheets[sheetName];
+              const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+              if (dados.length === 0 || dados[0].length < 5) {
+                alert("Formato de planilha inválido. Verifique se o arquivo contém todas as colunas necessárias.");
                 return;
-            }
+              }
 
-            if (dadosPlanilha.length === 0) {
-                alert("Por favor, carregue uma planilha primeiro!");
-                return;
-            }
+              // Filtra por matrícula
+              let dadosFiltrados = dados.filter(
+                (row) => row[1] && row[1].toString().includes(matricula)
+              );
 
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('resultados').style.display = 'none';
-            
-            // Simular processamento para melhor UX
-            setTimeout(() => {
-                processData(login);
-            }, 100);
+              // Filtra por período se as datas foram informadas
+              if (dataInicio || dataFim) {
+                dadosFiltrados = filtrarPorPeriodo(dadosFiltrados, dataInicio, dataFim);
+              }
+
+              // Separa os tickets por tipo conforme a opção selecionada
+              resultadosAtuais = {};
+              
+              if (tipoConsulta === 'ambos' || tipoConsulta === 'ral') {
+                const ticketsRal = dadosFiltrados.filter(ticket => ticket[0] && ticket[0].toString().startsWith("RAL"));
+                resultadosAtuais.RAL = analisarSLA(ticketsRal);
+              }
+              
+              if (tipoConsulta === 'ambos' || tipoConsulta === 'rec') {
+                const ticketsRec = dadosFiltrados.filter(ticket => ticket[0] && ticket[0].toString().startsWith("REC"));
+                resultadosAtuais.REC = analisarSLA(ticketsRec);
+              }
+
+              exibirResultados();
+              document.getElementById("btnExportar").disabled = false;
+
+            } catch (error) {
+              console.error("Erro ao processar arquivo:", error);
+              alert("Ocorreu um erro ao processar o arquivo. Verifique o console para mais detalhes.");
+            } finally {
+              document.getElementById("loading").style.display = "none";
+              document.getElementById("btnConsultar").disabled = false;
+            }
+          };
+
+          reader.onerror = function() {
+            alert("Erro ao ler o arquivo. Por favor, tente novamente.");
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("btnConsultar").disabled = false;
+          };
+
+          reader.readAsArrayBuffer(fileInput.files[0]);
+
+        } catch (error) {
+          console.error("Erro:", error);
+          alert("Ocorreu um erro durante o processamento.");
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("btnConsultar").disabled = false;
         }
+      }, 100);
+    }
 
-        function processData(login) {
-            const nomeUsuario = loginToName[login] || "Nome não encontrado";
-            document.getElementById("nomeUsuario").innerHTML = `Consultor: ${nomeUsuario}`;
-            document.getElementById("nomeUsuario").classList.remove("hidden");
-
-            const dentroSLA = [];
-            const foraSLA = [];
-            let totalDentroSLA = 0;
-            let totalForaSLA = 0;
-
-            for (let i = 1; i < dadosPlanilha.length; i++) {
-                const row = dadosPlanilha[i];
-                if (!row || row.length < 7) continue;
-
-                const ticket = row[0]?.toString().trim() || "N/A";
-                const usuarioLogin = row[1]?.toString().trim().toUpperCase();
-                const tempoRaw = parseFloat(row[4]) || 0; // Coluna E
-                const volume = parseInt(row[5]) || 0;     // Coluna F
-                const indicador = parseInt(row[6]) || 0;  // Coluna G
-
-                if (usuarioLogin && usuarioLogin.includes(login)) {
-                    const tempoMinutos = Math.round(tempoRaw * 1440);
-                    
-                    if (volume === 1 && indicador === 1) {
-                        dentroSLA.push({ ticket, tempo: tempoMinutos, status: "Dentro do SLA" });
-                        totalDentroSLA += tempoMinutos;
-                    } else if (volume === 1 && indicador === 0) {
-                        foraSLA.push({ ticket, tempo: tempoMinutos, status: "Fora do SLA" });
-                        totalForaSLA += tempoMinutos;
-                    }
-                }
-            }
-
-            atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA);
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('resultados').style.display = 'block';
+    function filtrarPorPeriodo(dados, dataInicio, dataFim) {
+      return dados.filter(row => {
+        try {
+          if (!row[2]) return false; // Se não tem data de abertura, descarta
+          
+          const dataAbertura = new Date(row[2]);
+          if (isNaN(dataAbertura.getTime())) return false; // Data inválida
+          
+          // Filtro de data inicial
+          if (dataInicio) {
+            const inicio = new Date(dataInicio);
+            if (dataAbertura < inicio) return false;
+          }
+          
+          // Filtro de data final
+          if (dataFim) {
+            const fim = new Date(dataFim);
+            fim.setDate(fim.getDate() + 1); // Inclui todo o dia final
+            if (dataAbertura > fim) return false;
+          }
+          
+          return true;
+        } catch (e) {
+          console.warn("Erro ao filtrar data do ticket:", row, e);
+          return false;
         }
+      });
+    }
 
-        function atualizarTabelaResultados(dentroSLA, foraSLA, totalDentroSLA, totalForaSLA) {
-            // Ordena por tempo (decrescente)
-            dentroSLA.sort((a, b) => b.tempo - a.tempo);
-            foraSLA.sort((a, b) => b.tempo - a.tempo);
+    function analisarSLA(listaTickets) {
+      const dentroSLA = [];
+      const foraSLA = [];
+      let tempoTotal = 0;
+      let count = 0;
 
-            // Atualiza tabela Dentro do SLA
-            const tabelaDentroSLA = document.getElementById("tabelaDentroSLA").getElementsByTagName("tbody")[0];
-            tabelaDentroSLA.innerHTML = "";
-            
-            if (dentroSLA.length === 0) {
-                const row = tabelaDentroSLA.insertRow();
-                const cell = row.insertCell(0);
-                cell.colSpan = 3;
-                cell.innerText = "Nenhum ticket encontrado";
-                cell.style.textAlign = "center";
-            } else {
-                dentroSLA.forEach(item => {
-                    const row = tabelaDentroSLA.insertRow();
-                    row.className = "ganho";
-                    row.insertCell(0).innerText = item.ticket;
-                    row.insertCell(1).innerText = item.tempo.toLocaleString();
-                    row.insertCell(2).innerText = item.status;
-                });
-            }
-
-            // Atualiza tabela Fora do SLA
-            const tabelaForaSLA = document.getElementById("tabelaForaSLA").getElementsByTagName("tbody")[0];
-            tabelaForaSLA.innerHTML = "";
-            
-            if (foraSLA.length === 0) {
-                const row = tabelaForaSLA.insertRow();
-                const cell = row.insertCell(0);
-                cell.colSpan = 3;
-                cell.innerText = "Nenhum ticket encontrado";
-                cell.style.textAlign = "center";
-            } else {
-                foraSLA.forEach(item => {
-                    const row = tabelaForaSLA.insertRow();
-                    row.className = "perda";
-                    row.insertCell(0).innerText = item.ticket;
-                    row.insertCell(1).innerText = item.tempo.toLocaleString();
-                    row.insertCell(2).innerText = item.status;
-                });
-            }
-
-            // Atualiza estatísticas
-            const mediaDentroSLA = dentroSLA.length > 0 ? (totalDentroSLA / dentroSLA.length) : 0;
-            const mediaForaSLA = foraSLA.length > 0 ? (totalForaSLA / foraSLA.length) : 0;
-
-            document.getElementById("statsDentroSLA").innerHTML = `
-                Dentro SLA: ${dentroSLA.length} tickets | 
-                ${totalDentroSLA.toLocaleString()} min | 
-                Média: ${mediaDentroSLA.toFixed(2)} min
-            `;
-
-            document.getElementById("statsForaSLA").innerHTML = `
-                Fora SLA: ${foraSLA.length} tickets | 
-                ${totalForaSLA.toLocaleString()} min | 
-                Média: ${mediaForaSLA.toFixed(2)} min
-            `;
-
-            document.getElementById("statsContainer").classList.remove("hidden");
+      listaTickets.forEach((row) => {
+        try {
+          if (!row[2] || !row[3]) return; // Ignora se não tem datas de abertura/encerramento
+          
+          const abertura = new Date(row[2]);
+          const encerramento = new Date(row[3]);
+          
+          if (isNaN(abertura.getTime()) || isNaN(encerramento.getTime())) {
+            console.warn("Data inválida no ticket:", row);
+            return;
+          }
+          
+          const tempo = (encerramento - abertura) / (1000 * 60); // minutos
+          tempoTotal += tempo;
+          count++;
+          
+          if (tempo <= 1440) { // 24 horas em minutos
+            dentroSLA.push(row);
+          } else {
+            foraSLA.push(row);
+          }
+        } catch (error) {
+          console.warn("Erro ao analisar ticket:", row, error);
         }
+      });
 
-        // Ativar botão quando ambos os campos estiverem preenchidos
-        document.getElementById('login').addEventListener('input', function() {
-            const login = this.value.trim();
-            const hasFile = dadosPlanilha.length > 0;
-            document.getElementById('consultarBtn').disabled = !(login && hasFile);
+      const tempoMedio = count > 0 ? (tempoTotal / count) : 0;
+      
+      return { 
+        dentroSLA, 
+        foraSLA,
+        tempoMedio: formatarTempo(tempoMedio),
+        total: listaTickets.length
+      };
+    }
+
+    function formatarTempo(minutos) {
+      if (minutos < 60) {
+        return `${Math.round(minutos)} minutos`;
+      } else if (minutos < 1440) {
+        const horas = Math.floor(minutos / 60);
+        const mins = Math.round(minutos % 60);
+        return `${horas}h ${mins}m`;
+      } else {
+        const dias = Math.floor(minutos / 1440);
+        const horas = Math.floor((minutos % 1440) / 60);
+        return `${dias}d ${horas}h`;
+      }
+    }
+
+    function exibirResultados() {
+      const container = document.getElementById("resultadosContainer");
+      container.innerHTML = '';
+      
+      // Verifica se há resultados para exibir
+      if (Object.keys(resultadosAtuais).length === 0) {
+        container.innerHTML = '<p class="no-results">Nenhum resultado encontrado para os critérios informados.</p>';
+        return;
+      }
+      
+      // Cria abas para cada tipo de resultado
+      const tipos = Object.keys(resultadosAtuais);
+      
+      if (tipos.length > 1) {
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'tabs-container';
+        
+        const tabs = document.createElement('div');
+        tabs.className = 'tabs';
+        
+        tipos.forEach((tipo, index) => {
+          const tab = document.createElement('div');
+          tab.className = `tab ${index === 0 ? 'active' : ''}`;
+          tab.textContent = tipo;
+          tab.onclick = () => switchTab(tipo);
+          tabs.appendChild(tab);
         });
-    </script>
+        
+        tabsContainer.appendChild(tabs);
+        container.appendChild(tabsContainer);
+      }
+      
+      // Cria conteúdo para cada tipo
+      tipos.forEach((tipo, index) => {
+        const resultado = resultadosAtuais[tipo];
+        const resultadoBox = document.createElement('div');
+        resultadoBox.className = `resultado-box tab-content ${index === 0 ? 'active' : ''}`;
+        resultadoBox.id = `tab-${tipo}`;
+        
+        resultadoBox.innerHTML = `
+          <h2>Tickets ${tipo}</h2>
+          <div class="sla-status">
+            <div>
+              <span class="sla-dentro">Dentro do SLA: ${resultado.dentroSLA.length}</span>
+              <span> (${resultado.total > 0 ? Math.round((resultado.dentroSLA.length / resultado.total) * 100) : 0}%)</span>
+            </div>
+            <div>
+              <span class="sla-fora">Fora do SLA: ${resultado.foraSLA.length}</span>
+              <span> (${resultado.total > 0 ? Math.round((resultado.foraSLA.length / resultado.total) * 100) : 0}%)</span>
+            </div>
+          </div>
+          <p><strong>Tempo médio de resolução:</strong> ${resultado.tempoMedio}</p>
+          
+          <div class="chart-container">
+            <canvas id="chart-${tipo}"></canvas>
+          </div>
+          
+          <details>
+            <summary>Ver detalhes dos tickets fora do SLA (${resultado.foraSLA.length})</summary>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Matrícula</th>
+                    <th>Abertura</th>
+                    <th>Encerramento</th>
+                    <th>Tempo</th>
+                    <th>Descrição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${resultado.foraSLA.map(row => `
+                    <tr>
+                      <td>${row[0] || ''}</td>
+                      <td>${row[1] || ''}</td>
+                      <td>${formatarData(row[2])}</td>
+                      <td>${formatarData(row[3])}</td>
+                      <td>${formatarTempo((new Date(row[3]) - new Date(row[2])) / (1000 * 60))}</td>
+                      <td>${row[4] || ''}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </details>
+          
+          <details>
+            <summary>Ver todos os tickets (${resultado.total})</summary>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Matrícula</th>
+                    <th>Abertura</th>
+                    <th>Encerramento</th>
+                    <th>Tempo</th>
+                    <th>SLA</th>
+                    <th>Descrição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${[...resultado.dentroSLA, ...resultado.foraSLA].map(row => {
+                    const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
+                    const dentroSLA = tempo <= 1440;
+                    return `
+                      <tr>
+                        <td>${row[0] || ''}</td>
+                        <td>${row[1] || ''}</td>
+                        <td>${formatarData(row[2])}</td>
+                        <td>${formatarData(row[3])}</td>
+                        <td>${formatarTempo(tempo)}</td>
+                        <td class="${dentroSLA ? 'sla-dentro' : 'sla-fora'}">${dentroSLA ? 'Dentro' : 'Fora'}</td>
+                        <td>${row[4] || ''}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        `;
+        
+        container.appendChild(resultadoBox);
+        
+        // Cria gráfico após o elemento ser adicionado ao DOM
+        setTimeout(() => criarGrafico(tipo, resultado), 100);
+      });
+    }
+
+    function formatarData(dataString) {
+      if (!dataString) return '';
+      try {
+        const date = new Date(dataString);
+        if (isNaN(date.getTime())) return dataString;
+        return date.toLocaleString('pt-BR');
+      } catch {
+        return dataString;
+      }
+    }
+
+    function switchTab(tipo) {
+      // Esconde todos os conteúdos
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Desativa todas as abas
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Ativa a aba e conteúdo selecionados
+      document.getElementById(`tab-${tipo}`).classList.add('active');
+      document.querySelectorAll('.tab').forEach(tab => {
+        if (tab.textContent === tipo) tab.classList.add('active');
+      });
+    }
+
+    function criarGrafico(tipo, resultado) {
+      const ctx = document.getElementById(`chart-${tipo}`).getContext('2d');
+      
+      // Destrói o gráfico anterior se existir
+      if (ctx.chart) {
+        ctx.chart.destroy();
+      }
+      
+      const total = resultado.total || 1;
+      const dentroPercent = (resultado.dentroSLA.length / total) * 100;
+      const foraPercent = (resultado.foraSLA.length / total) * 100;
+      
+      ctx.chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Dentro do SLA', 'Fora do SLA'],
+          datasets: [{
+            data: [dentroPercent, foraPercent],
+            backgroundColor: ['#2ecc71', '#e74c3c'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  return `${label}: ${value.toFixed(1)}% (${context.label === 'Dentro do SLA' ? resultado.dentroSLA.length : resultado.foraSLA.length} tickets)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function exportarResultados() {
+      if (!workbookGlobal || Object.keys(resultadosAtuais).length === 0) {
+        alert("Nenhum resultado disponível para exportar.");
+        return;
+      }
+
+      try {
+        // Cria uma nova planilha com os resultados
+        const wb = XLSX.utils.book_new();
+        
+        Object.keys(resultadosAtuais).forEach(tipo => {
+          const resultado = resultadosAtuais[tipo];
+          const dadosExport = [];
+          
+          // Cabeçalho
+          dadosExport.push(["Ticket", "Matrícula", "Abertura", "Encerramento", "Tempo (min)", "Status SLA", "Descrição"]);
+          
+          // Adiciona todos os tickets
+          [...resultado.dentroSLA, ...resultado.foraSLA].forEach(row => {
+            const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
+            const statusSLA = tempo <= 1440 ? "Dentro" : "Fora";
+            
+            dadosExport.push([
+              row[0] || '',
+              row[1] || '',
+              formatarData(row[2]),
+              formatarData(row[3]),
+              Math.round(tempo),
+              statusSLA,
+              row[4] || ''
+            ]);
+          });
+          
+          // Adiciona a aba ao workbook
+          const ws = XLSX.utils.aoa_to_sheet(dadosExport);
+          XLSX.utils.book_append_sheet(wb, ws, tipo);
+        });
+        
+        // Gera o arquivo e faz o download
+        XLSX.writeFile(wb, `Resultados_SLA_${document.getElementById("matricula").value}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        
+      } catch (error) {
+        console.error("Erro ao exportar resultados:", error);
+        alert("Ocorreu um erro ao exportar os resultados. Verifique o console para mais detalhes.");
+      }
+    }
+  </script>
 </body>
 </html>
