@@ -1,142 +1,202 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel SLA - Consulta por Matrícula</title>
   <style>
+    :root {
+      --vermelho: #e60000;
+      --vermelho-escuro: #c50000;
+      --verde: #2ecc71;
+      --vermelho-sla: #e74c3c;
+      --cinza-claro: #f5f5f5;
+      --cinza-medio: #e0e0e0;
+      --cinza-texto: #555;
+      --branco: #ffffff;
+    }
+    
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--cinza-claro);
       margin: 0;
       padding: 20px;
       color: #333;
     }
+    
     .container {
       max-width: 1000px;
       margin: 0 auto;
+      background-color: var(--branco);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.1);
     }
+    
     h1 {
-      color: #e60000;
+      color: var(--vermelho);
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      font-size: 28px;
     }
+    
     .input-group {
-      background: #fff;
+      background: var(--branco);
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      border: 1px solid var(--cinza-medio);
+      margin-bottom: 25px;
     }
-    input, button, select {
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+    
+    .input-row {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: var(--cinza-texto);
+    }
+    
+    input, select {
+      padding: 12px;
+      margin: 5px 0;
+      border: 1px solid var(--cinza-medio);
+      border-radius: 6px;
       width: 100%;
       box-sizing: border-box;
+      font-size: 15px;
     }
+    
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
     button {
-      background-color: #e60000;
-      color: white;
+      padding: 12px 20px;
       border: none;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      transition: background-color 0.3s;
+      transition: all 0.3s;
+      font-size: 15px;
+      flex: 1;
+      min-width: 120px;
     }
-    button:hover {
-      background-color: #c50000;
+    
+    .btn-primary {
+      background-color: var(--vermelho);
+      color: white;
     }
+    
+    .btn-primary:hover {
+      background-color: var(--vermelho-escuro);
+    }
+    
+    .btn-secondary {
+      background-color: var(--cinza-medio);
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #d0d0d0;
+    }
+    
     button:disabled {
       background-color: #cccccc;
       cursor: not-allowed;
+      opacity: 0.7;
     }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .button-group button {
-      flex: 1;
-    }
+    
     .resultado-box {
-      background: #fff;
-      padding: 15px;
+      background: var(--branco);
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border: 1px solid var(--cinza-medio);
       margin-bottom: 20px;
       overflow-x: auto;
     }
+    
     .sla-dentro {
-      color: #2ecc71;
+      color: var(--verde);
       font-weight: bold;
     }
+    
     .sla-fora {
-      color: #e74c3c;
+      color: var(--vermelho-sla);
       font-weight: bold;
     }
+    
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
       font-size: 14px;
     }
+    
     th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
+      border: 1px solid var(--cinza-medio);
+      padding: 12px;
       text-align: left;
     }
+    
     th {
-      background-color: #f2f2f2;
+      background-color: #f8f8f8;
       position: sticky;
       top: 0;
+      font-weight: 600;
     }
+    
     tr:hover {
-      background-color: #f0f0f0;
+      background-color: #f9f9f9;
     }
+    
     .loading {
       display: none;
       text-align: center;
-      margin: 20px 0;
+      margin: 30px 0;
+      padding: 20px;
+      background-color: rgba(255,255,255,0.8);
+      border-radius: 8px;
     }
+    
     .spinner {
       border: 4px solid rgba(0, 0, 0, 0.1);
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      border-left-color: #e60000;
+      border-left-color: var(--vermelho);
       animation: spin 1s linear infinite;
       display: inline-block;
+      margin-bottom: 15px;
     }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .filtros {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    .filtro-item {
-      flex: 1;
-      min-width: 200px;
-    }
-    .resumo {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #f8f8f8;
-      border-radius: 4px;
-    }
-    .resumo-item {
+    
+    .status-msg {
       text-align: center;
-      flex: 1;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 6px;
+      background-color: #f0f0f0;
+      font-weight: 500;
     }
-    .resumo-valor {
-      font-size: 18px;
-      font-weight: bold;
+    
+    .success-msg {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .info-msg {
+      background-color: #e3f2fd;
+      color: #1565c0;
     }
   </style>
 </head>
@@ -145,44 +205,30 @@
     <h1>Painel de Consulta SLA - ETIT Residencial</h1>
 
     <div class="input-group">
-      <div>
+      <div class="input-row">
         <label for="arquivoExcel">Selecione o arquivo Excel:</label>
-        <input type="file" id="arquivoExcel" accept=".xlsx,.xls" />
+        <input type="file" id="arquivoExcel" accept=".xlsx,.xls">
       </div>
-      <div>
+      <div class="input-row">
         <label for="matricula">Matrícula:</label>
-        <input type="text" id="matricula" placeholder="Digite a matrícula" />
+        <input type="text" id="matricula" placeholder="Digite a matrícula">
       </div>
-      <button id="btnConsultar" onclick="consultar()">Consultar Todos os Tickets</button>
+      
+      <div class="button-group">
+        <button id="btnConsultar" class="btn-primary" onclick="consultar('TODOS')">Consultar Todos</button>
+        <button id="btnRal" class="btn-secondary" onclick="consultar('RAL')" disabled>Consultar RAL</button>
+        <button id="btnRec" class="btn-secondary" onclick="consultar('REC')" disabled>Consultar REC</button>
+      </div>
     </div>
 
     <div id="loading" class="loading">
       <div class="spinner"></div>
       <p>Processando arquivo...</p>
     </div>
+    
+    <div id="statusMsg" class="status-msg" style="display: none;"></div>
 
     <div id="resultadosContainer">
-      <div id="filtrosContainer" class="filtros" style="display: none;">
-        <div class="filtro-item">
-          <label for="filtroTipo">Filtrar por Tipo:</label>
-          <select id="filtroTipo" onchange="filtrarTickets()">
-            <option value="todos">Todos</option>
-            <option value="RAL">RAL</option>
-            <option value="REC">REC</option>
-          </select>
-        </div>
-        <div class="filtro-item">
-          <label for="filtroSLA">Filtrar por SLA:</label>
-          <select id="filtroSLA" onchange="filtrarTickets()">
-            <option value="todos">Todos</option>
-            <option value="dentro">Dentro do SLA</option>
-            <option value="fora">Fora do SLA</option>
-          </select>
-        </div>
-      </div>
-
-      <div id="resumoContainer" class="resumo" style="display: none;"></div>
-
       <div id="ticketsContainer" class="resultado-box" style="display: none;">
         <table id="ticketsTable">
           <thead>
@@ -191,9 +237,6 @@
               <th>Tipo</th>
               <th>Tempo</th>
               <th>SLA</th>
-              <th>Matrícula</th>
-              <th>Abertura</th>
-              <th>Encerramento</th>
             </tr>
           </thead>
           <tbody id="ticketsBody"></tbody>
@@ -207,7 +250,7 @@
     let todosTickets = [];
     let ticketsFiltrados = [];
 
-    // Habilita/desabilita botão conforme seleção de arquivo e matrícula
+    // Habilita/desabilita botões conforme seleção de arquivo e matrícula
     document.getElementById('arquivoExcel').addEventListener('change', validarEntradas);
     document.getElementById('matricula').addEventListener('input', validarEntradas);
 
@@ -216,9 +259,23 @@
       const matriculaPreenchida = document.getElementById('matricula').value.trim() !== '';
       
       document.getElementById('btnConsultar').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      document.getElementById('btnRal').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      document.getElementById('btnRec').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      
+      // Se já tem dados carregados, mostra mensagem
+      if (todosTickets.length > 0 && arquivoSelecionado && matriculaPreenchida) {
+        showStatus('Planilha carregada. Selecione uma opção de consulta.', 'info');
+      }
     }
 
-    function consultar() {
+    function showStatus(msg, type = 'info') {
+      const statusDiv = document.getElementById('statusMsg');
+      statusDiv.textContent = msg;
+      statusDiv.className = `status-msg ${type}-msg`;
+      statusDiv.style.display = 'block';
+    }
+
+    function consultar(tipo) {
       const fileInput = document.getElementById("arquivoExcel");
       const matricula = document.getElementById("matricula").value.trim();
 
@@ -234,7 +291,18 @@
 
       document.getElementById("loading").style.display = "block";
       document.getElementById("btnConsultar").disabled = true;
+      document.getElementById("btnRal").disabled = true;
+      document.getElementById("btnRec").disabled = true;
 
+      // Se já temos os dados carregados, apenas filtra
+      if (todosTickets.length > 0) {
+        processarTipo(tipo);
+        document.getElementById("loading").style.display = "none";
+        validarEntradas();
+        return;
+      }
+
+      // Processa o arquivo pela primeira vez
       const reader = new FileReader();
       reader.onload = function (e) {
         try {
@@ -278,58 +346,38 @@
                 ticket: row[0] || '',
                 tipo: tipo,
                 tempo: tempoMinutos,
-                sla: dentroSLA ? "Dentro" : "Fora",
-                matricula: row[1] || '',
-                abertura: row[2] || '',
-                encerramento: row[3] || '',
-                descricao: row[4] || ''
+                sla: dentroSLA ? "Dentro" : "Fora"
               };
             });
 
-          // Mostra os controles de filtro
-          document.getElementById("filtrosContainer").style.display = "flex";
-          document.getElementById("ticketsContainer").style.display = "block";
-          
-          // Exibe todos os tickets inicialmente
-          ticketsFiltrados = [...todosTickets];
-          atualizarTabela();
-          atualizarResumo();
+          showStatus('Planilha carregada com sucesso!', 'success');
+          processarTipo(tipo);
 
         } catch (error) {
           console.error("Erro ao processar arquivo:", error);
           alert("Ocorreu um erro ao processar o arquivo.");
         } finally {
           document.getElementById("loading").style.display = "none";
-          document.getElementById("btnConsultar").disabled = false;
+          validarEntradas();
         }
       };
 
       reader.onerror = function() {
         alert("Erro ao ler o arquivo. Por favor, tente novamente.");
         document.getElementById("loading").style.display = "none";
-        document.getElementById("btnConsultar").disabled = false;
+        validarEntradas();
       };
 
       reader.readAsArrayBuffer(fileInput.files[0]);
     }
 
-    function filtrarTickets() {
-      const tipo = document.getElementById("filtroTipo").value;
-      const sla = document.getElementById("filtroSLA").value;
-
-      ticketsFiltrados = todosTickets.filter(ticket => {
-        // Filtro por tipo
-        if (tipo !== 'todos' && ticket.tipo !== tipo) return false;
-        
-        // Filtro por SLA
-        if (sla !== 'todos') {
-          if (sla === 'dentro' && ticket.sla !== 'Dentro') return false;
-          if (sla === 'fora' && ticket.sla !== 'Fora') return false;
-        }
-        
-        return true;
-      });
-
+    function processarTipo(tipo) {
+      if (tipo === 'TODOS') {
+        ticketsFiltrados = [...todosTickets];
+      } else {
+        ticketsFiltrados = todosTickets.filter(ticket => ticket.tipo === tipo);
+      }
+      
       atualizarTabela();
     }
 
@@ -337,6 +385,14 @@
       const tbody = document.getElementById("ticketsBody");
       tbody.innerHTML = '';
 
+      if (ticketsFiltrados.length === 0) {
+        document.getElementById("ticketsContainer").style.display = "none";
+        showStatus('Nenhum ticket encontrado para os critérios selecionados.', 'info');
+        return;
+      }
+
+      document.getElementById("ticketsContainer").style.display = "block";
+      
       ticketsFiltrados.forEach(ticket => {
         const tr = document.createElement('tr');
         
@@ -345,58 +401,10 @@
           <td>${ticket.tipo}</td>
           <td>${formatarTempo(ticket.tempo)}</td>
           <td class="${ticket.sla === 'Dentro' ? 'sla-dentro' : 'sla-fora'}">${ticket.sla}</td>
-          <td>${ticket.matricula}</td>
-          <td>${formatarData(ticket.abertura)}</td>
-          <td>${formatarData(ticket.encerramento)}</td>
         `;
         
         tbody.appendChild(tr);
       });
-    }
-
-    function atualizarResumo() {
-      const resumoContainer = document.getElementById("resumoContainer");
-      resumoContainer.style.display = "flex";
-      
-      const total = todosTickets.length;
-      const totalRAL = todosTickets.filter(t => t.tipo === 'RAL').length;
-      const totalREC = todosTickets.filter(t => t.tipo === 'REC').length;
-      const dentroSLA = todosTickets.filter(t => t.sla === 'Dentro').length;
-      const foraSLA = todosTickets.filter(t => t.sla === 'Fora').length;
-      
-      resumoContainer.innerHTML = `
-        <div class="resumo-item">
-          <div class="resumo-valor">${total}</div>
-          <div>Total de Tickets</div>
-        </div>
-        <div class="resumo-item">
-          <div class="resumo-valor">${totalRAL}</div>
-          <div>Tickets RAL</div>
-        </div>
-        <div class="resumo-item">
-          <div class="resumo-valor">${totalREC}</div>
-          <div>Tickets REC</div>
-        </div>
-        <div class="resumo-item">
-          <div class="resumo-valor sla-dentro">${dentroSLA}</div>
-          <div>Dentro do SLA</div>
-        </div>
-        <div class="resumo-item">
-          <div class="resumo-valor sla-fora">${foraSLA}</div>
-          <div>Fora do SLA</div>
-        </div>
-      `;
-    }
-
-    function formatarData(dataString) {
-      if (!dataString) return '';
-      try {
-        const date = new Date(dataString);
-        if (isNaN(date.getTime())) return dataString;
-        return date.toLocaleString('pt-BR');
-      } catch {
-        return dataString;
-      }
     }
 
     function formatarTempo(minutos) {
