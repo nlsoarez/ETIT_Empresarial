@@ -13,7 +13,7 @@
       color: #333;
     }
     .container {
-      max-width: 1200px;
+      max-width: 800px;
       margin: 0 auto;
     }
     h1 {
@@ -27,11 +27,13 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    input, button, select {
+    input, button {
       padding: 10px;
       margin: 5px 0;
       border: 1px solid #ddd;
       border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
     }
     button {
       background-color: #e60000;
@@ -48,18 +50,20 @@
       background-color: #cccccc;
       cursor: not-allowed;
     }
-    #resultadosContainer {
+    .button-group {
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .button-group button {
+      flex: 1;
     }
     .resultado-box {
       background: #fff;
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      flex: 1;
-      min-width: 300px;
+      margin-bottom: 20px;
     }
     .sla-status {
       display: flex;
@@ -73,16 +77,6 @@
     .sla-fora {
       color: #e74c3c;
       font-weight: bold;
-    }
-    details {
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 10px;
-    }
-    summary {
-      font-weight: bold;
-      cursor: pointer;
     }
     table {
       width: 100%;
@@ -118,31 +112,6 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .tabs {
-      display: flex;
-      margin-bottom: 15px;
-    }
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      background: #ddd;
-      margin-right: 5px;
-      border-radius: 4px 4px 0 0;
-    }
-    .tab.active {
-      background: #e60000;
-      color: white;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .chart-container {
-      height: 300px;
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
@@ -158,24 +127,10 @@
         <label for="matricula">Matrícula:</label>
         <input type="text" id="matricula" placeholder="Digite a matrícula" />
       </div>
-      <div>
-        <label for="dataInicio">Período inicial (opcional):</label>
-        <input type="date" id="dataInicio" />
+      <div class="button-group">
+        <button id="btnRal" onclick="consultar('RAL')" disabled>Consultar RAL</button>
+        <button id="btnRec" onclick="consultar('REC')" disabled>Consultar REC</button>
       </div>
-      <div>
-        <label for="dataFim">Período final (opcional):</label>
-        <input type="date" id="dataFim" />
-      </div>
-      <div>
-        <label for="tipoConsulta">Tipo de consulta:</label>
-        <select id="tipoConsulta">
-          <option value="ambos">Ambos (RAL e REC)</option>
-          <option value="ral">Somente RAL</option>
-          <option value="rec">Somente REC</option>
-        </select>
-      </div>
-      <button id="btnConsultar" onclick="processarArquivo()">Consultar</button>
-      <button id="btnExportar" onclick="exportarResultados()" disabled>Exportar Resultados</button>
     </div>
 
     <div id="loading" class="loading">
@@ -187,36 +142,25 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let workbookGlobal;
-    let resultadosAtuais = {};
+    let dadosFiltrados = [];
 
-    document.getElementById('arquivoExcel').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        // Validação do tipo de arquivo
-        if (!file.name.match(/\.(xlsx|xls)$/i)) {
-          alert('Por favor, selecione um arquivo Excel válido (.xlsx ou .xls)');
-          e.target.value = '';
-          return;
-        }
-        
-        // Validação do tamanho do arquivo (limite de 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert('O arquivo é muito grande. Por favor, selecione um arquivo menor que 5MB.');
-          e.target.value = '';
-          return;
-        }
-      }
-    });
+    // Habilita/desabilita botões conforme seleção de arquivo e matrícula
+    document.getElementById('arquivoExcel').addEventListener('change', validarEntradas);
+    document.getElementById('matricula').addEventListener('input', validarEntradas);
 
-    function processarArquivo() {
+    function validarEntradas() {
+      const arquivoSelecionado = document.getElementById('arquivoExcel').files.length > 0;
+      const matriculaPreenchida = document.getElementById('matricula').value.trim() !== '';
+      
+      document.getElementById('btnRal').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      document.getElementById('btnRec').disabled = !(arquivoSelecionado && matriculaPreenchida);
+    }
+
+    function consultar(tipo) {
       const fileInput = document.getElementById("arquivoExcel");
       const matricula = document.getElementById("matricula").value.trim();
-      const dataInicio = document.getElementById("dataInicio").value;
-      const dataFim = document.getElementById("dataFim").value;
-      const tipoConsulta = document.getElementById("tipoConsulta").value;
 
       if (!fileInput.files.length) {
         alert("Selecione um arquivo para continuar.");
@@ -228,115 +172,75 @@
         return;
       }
 
-      // Mostra o indicador de carregamento
       document.getElementById("loading").style.display = "block";
-      document.getElementById("btnConsultar").disabled = true;
+      document.getElementById("btnRal").disabled = true;
+      document.getElementById("btnRec").disabled = true;
 
-      // Processamento assíncrono para não travar a interface
-      setTimeout(() => {
+      // Se já temos os dados filtrados, apenas filtra pelo tipo
+      if (dadosFiltrados.length > 0) {
+        processarTipo(tipo);
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("btnRal").disabled = false;
+        document.getElementById("btnRec").disabled = false;
+        return;
+      }
+
+      // Processa o arquivo pela primeira vez
+      const reader = new FileReader();
+      reader.onload = function (e) {
         try {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            try {
-              const data = new Uint8Array(e.target.result);
-              const workbook = XLSX.read(data, { type: "array" });
-              workbookGlobal = workbook;
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          workbookGlobal = workbook;
 
-              const sheetName = workbook.SheetNames[0];
-              const sheet = workbook.Sheets[sheetName];
-              const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-              if (dados.length === 0 || dados[0].length < 5) {
-                alert("Formato de planilha inválido. Verifique se o arquivo contém todas as colunas necessárias.");
-                return;
-              }
+          if (dados.length === 0 || dados[0].length < 5) {
+            alert("Formato de planilha inválido. Verifique se o arquivo contém todas as colunas necessárias.");
+            return;
+          }
 
-              // Filtra por matrícula
-              let dadosFiltrados = dados.filter(
-                (row) => row[1] && row[1].toString().includes(matricula)
-              );
+          // Filtra por matrícula
+          dadosFiltrados = dados.filter(
+            (row) => row[1] && row[1].toString().includes(matricula)
+          );
 
-              // Filtra por período se as datas foram informadas
-              if (dataInicio || dataFim) {
-                dadosFiltrados = filtrarPorPeriodo(dadosFiltrados, dataInicio, dataFim);
-              }
-
-              // Separa os tickets por tipo conforme a opção selecionada
-              resultadosAtuais = {};
-              
-              if (tipoConsulta === 'ambos' || tipoConsulta === 'ral') {
-                const ticketsRal = dadosFiltrados.filter(ticket => ticket[0] && ticket[0].toString().startsWith("RAL"));
-                resultadosAtuais.RAL = analisarSLA(ticketsRal);
-              }
-              
-              if (tipoConsulta === 'ambos' || tipoConsulta === 'rec') {
-                const ticketsRec = dadosFiltrados.filter(ticket => ticket[0] && ticket[0].toString().startsWith("REC"));
-                resultadosAtuais.REC = analisarSLA(ticketsRec);
-              }
-
-              exibirResultados();
-              document.getElementById("btnExportar").disabled = false;
-
-            } catch (error) {
-              console.error("Erro ao processar arquivo:", error);
-              alert("Ocorreu um erro ao processar o arquivo. Verifique o console para mais detalhes.");
-            } finally {
-              document.getElementById("loading").style.display = "none";
-              document.getElementById("btnConsultar").disabled = false;
-            }
-          };
-
-          reader.onerror = function() {
-            alert("Erro ao ler o arquivo. Por favor, tente novamente.");
-            document.getElementById("loading").style.display = "none";
-            document.getElementById("btnConsultar").disabled = false;
-          };
-
-          reader.readAsArrayBuffer(fileInput.files[0]);
+          processarTipo(tipo);
 
         } catch (error) {
-          console.error("Erro:", error);
-          alert("Ocorreu um erro durante o processamento.");
+          console.error("Erro ao processar arquivo:", error);
+          alert("Ocorreu um erro ao processar o arquivo.");
+        } finally {
           document.getElementById("loading").style.display = "none";
-          document.getElementById("btnConsultar").disabled = false;
+          document.getElementById("btnRal").disabled = false;
+          document.getElementById("btnRec").disabled = false;
         }
-      }, 100);
+      };
+
+      reader.onerror = function() {
+        alert("Erro ao ler o arquivo. Por favor, tente novamente.");
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("btnRal").disabled = false;
+        document.getElementById("btnRec").disabled = false;
+      };
+
+      reader.readAsArrayBuffer(fileInput.files[0]);
     }
 
-    function filtrarPorPeriodo(dados, dataInicio, dataFim) {
-      return dados.filter(row => {
-        try {
-          if (!row[2]) return false; // Se não tem data de abertura, descarta
-          
-          const dataAbertura = new Date(row[2]);
-          if (isNaN(dataAbertura.getTime())) return false; // Data inválida
-          
-          // Filtro de data inicial
-          if (dataInicio) {
-            const inicio = new Date(dataInicio);
-            if (dataAbertura < inicio) return false;
-          }
-          
-          // Filtro de data final
-          if (dataFim) {
-            const fim = new Date(dataFim);
-            fim.setDate(fim.getDate() + 1); // Inclui todo o dia final
-            if (dataAbertura > fim) return false;
-          }
-          
-          return true;
-        } catch (e) {
-          console.warn("Erro ao filtrar data do ticket:", row, e);
-          return false;
-        }
-      });
+    function processarTipo(tipo) {
+      const tickets = dadosFiltrados.filter(ticket => 
+        ticket[0] && ticket[0].toString().startsWith(tipo)
+      );
+
+      const resultado = analisarSLA(tickets);
+      exibirResultado(tipo, resultado);
     }
 
     function analisarSLA(listaTickets) {
       const dentroSLA = [];
       const foraSLA = [];
-      let tempoTotal = 0;
-      let count = 0;
 
       listaTickets.forEach((row) => {
         try {
@@ -351,8 +255,6 @@
           }
           
           const tempo = (encerramento - abertura) / (1000 * 60); // minutos
-          tempoTotal += tempo;
-          count++;
           
           if (tempo <= 1440) { // 24 horas em minutos
             dentroSLA.push(row);
@@ -364,159 +266,107 @@
         }
       });
 
-      const tempoMedio = count > 0 ? (tempoTotal / count) : 0;
-      
       return { 
         dentroSLA, 
         foraSLA,
-        tempoMedio: formatarTempo(tempoMedio),
         total: listaTickets.length
       };
     }
 
-    function formatarTempo(minutos) {
-      if (minutos < 60) {
-        return `${Math.round(minutos)} minutos`;
-      } else if (minutos < 1440) {
-        const horas = Math.floor(minutos / 60);
-        const mins = Math.round(minutos % 60);
-        return `${horas}h ${mins}m`;
-      } else {
-        const dias = Math.floor(minutos / 1440);
-        const horas = Math.floor((minutos % 1440) / 60);
-        return `${dias}d ${horas}h`;
-      }
-    }
-
-    function exibirResultados() {
+    function exibirResultado(tipo, resultado) {
       const container = document.getElementById("resultadosContainer");
-      container.innerHTML = '';
       
-      // Verifica se há resultados para exibir
-      if (Object.keys(resultadosAtuais).length === 0) {
-        container.innerHTML = '<p class="no-results">Nenhum resultado encontrado para os critérios informados.</p>';
-        return;
+      // Remove resultados anteriores do mesmo tipo
+      const oldResult = document.getElementById(`resultado-${tipo}`);
+      if (oldResult) {
+        oldResult.remove();
       }
       
-      // Cria abas para cada tipo de resultado
-      const tipos = Object.keys(resultadosAtuais);
+      const resultadoBox = document.createElement('div');
+      resultadoBox.className = 'resultado-box';
+      resultadoBox.id = `resultado-${tipo}`;
       
-      if (tipos.length > 1) {
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'tabs-container';
-        
-        const tabs = document.createElement('div');
-        tabs.className = 'tabs';
-        
-        tipos.forEach((tipo, index) => {
-          const tab = document.createElement('div');
-          tab.className = `tab ${index === 0 ? 'active' : ''}`;
-          tab.textContent = tipo;
-          tab.onclick = () => switchTab(tipo);
-          tabs.appendChild(tab);
-        });
-        
-        tabsContainer.appendChild(tabs);
-        container.appendChild(tabsContainer);
-      }
-      
-      // Cria conteúdo para cada tipo
-      tipos.forEach((tipo, index) => {
-        const resultado = resultadosAtuais[tipo];
-        const resultadoBox = document.createElement('div');
-        resultadoBox.className = `resultado-box tab-content ${index === 0 ? 'active' : ''}`;
-        resultadoBox.id = `tab-${tipo}`;
-        
-        resultadoBox.innerHTML = `
-          <h2>Tickets ${tipo}</h2>
-          <div class="sla-status">
-            <div>
-              <span class="sla-dentro">Dentro do SLA: ${resultado.dentroSLA.length}</span>
-              <span> (${resultado.total > 0 ? Math.round((resultado.dentroSLA.length / resultado.total) * 100) : 0}%)</span>
-            </div>
-            <div>
-              <span class="sla-fora">Fora do SLA: ${resultado.foraSLA.length}</span>
-              <span> (${resultado.total > 0 ? Math.round((resultado.foraSLA.length / resultado.total) * 100) : 0}%)</span>
-            </div>
+      resultadoBox.innerHTML = `
+        <h2>Tickets ${tipo}</h2>
+        <div class="sla-status">
+          <div>
+            <span class="sla-dentro">Dentro do SLA: ${resultado.dentroSLA.length}</span>
+            <span> (${resultado.total > 0 ? Math.round((resultado.dentroSLA.length / resultado.total) * 100) : 0}%)</span>
           </div>
-          <p><strong>Tempo médio de resolução:</strong> ${resultado.tempoMedio}</p>
-          
-          <div class="chart-container">
-            <canvas id="chart-${tipo}"></canvas>
+          <div>
+            <span class="sla-fora">Fora do SLA: ${resultado.foraSLA.length}</span>
+            <span> (${resultado.total > 0 ? Math.round((resultado.foraSLA.length / resultado.total) * 100) : 0}%)</span>
           </div>
-          
-          <details>
-            <summary>Ver detalhes dos tickets fora do SLA (${resultado.foraSLA.length})</summary>
-            <div class="table-container">
-              <table>
-                <thead>
+        </div>
+        
+        <details>
+          <summary>Ver detalhes dos tickets fora do SLA (${resultado.foraSLA.length})</summary>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Matrícula</th>
+                  <th>Abertura</th>
+                  <th>Encerramento</th>
+                  <th>Tempo</th>
+                  <th>Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${resultado.foraSLA.map(row => `
                   <tr>
-                    <th>Ticket</th>
-                    <th>Matrícula</th>
-                    <th>Abertura</th>
-                    <th>Encerramento</th>
-                    <th>Tempo</th>
-                    <th>Descrição</th>
+                    <td>${row[0] || ''}</td>
+                    <td>${row[1] || ''}</td>
+                    <td>${formatarData(row[2])}</td>
+                    <td>${formatarData(row[3])}</td>
+                    <td>${formatarTempo((new Date(row[3]) - new Date(row[2])) / (1000 * 60))}</td>
+                    <td>${row[4] || ''}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${resultado.foraSLA.map(row => `
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </details>
+        
+        <details>
+          <summary>Ver todos os tickets (${resultado.total})</summary>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Matrícula</th>
+                  <th>Abertura</th>
+                  <th>Encerramento</th>
+                  <th>Tempo</th>
+                  <th>SLA</th>
+                  <th>Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${[...resultado.dentroSLA, ...resultado.foraSLA].map(row => {
+                  const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
+                  const dentroSLA = tempo <= 1440;
+                  return `
                     <tr>
                       <td>${row[0] || ''}</td>
                       <td>${row[1] || ''}</td>
                       <td>${formatarData(row[2])}</td>
                       <td>${formatarData(row[3])}</td>
-                      <td>${formatarTempo((new Date(row[3]) - new Date(row[2])) / (1000 * 60))}</td>
+                      <td>${formatarTempo(tempo)}</td>
+                      <td class="${dentroSLA ? 'sla-dentro' : 'sla-fora'}">${dentroSLA ? 'Dentro' : 'Fora'}</td>
                       <td>${row[4] || ''}</td>
                     </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </details>
-          
-          <details>
-            <summary>Ver todos os tickets (${resultado.total})</summary>
-            <div class="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ticket</th>
-                    <th>Matrícula</th>
-                    <th>Abertura</th>
-                    <th>Encerramento</th>
-                    <th>Tempo</th>
-                    <th>SLA</th>
-                    <th>Descrição</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${[...resultado.dentroSLA, ...resultado.foraSLA].map(row => {
-                    const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
-                    const dentroSLA = tempo <= 1440;
-                    return `
-                      <tr>
-                        <td>${row[0] || ''}</td>
-                        <td>${row[1] || ''}</td>
-                        <td>${formatarData(row[2])}</td>
-                        <td>${formatarData(row[3])}</td>
-                        <td>${formatarTempo(tempo)}</td>
-                        <td class="${dentroSLA ? 'sla-dentro' : 'sla-fora'}">${dentroSLA ? 'Dentro' : 'Fora'}</td>
-                        <td>${row[4] || ''}</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          </details>
-        `;
-        
-        container.appendChild(resultadoBox);
-        
-        // Cria gráfico após o elemento ser adicionado ao DOM
-        setTimeout(() => criarGrafico(tipo, resultado), 100);
-      });
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      `;
+      
+      container.appendChild(resultadoBox);
     }
 
     function formatarData(dataString) {
@@ -530,111 +380,17 @@
       }
     }
 
-    function switchTab(tipo) {
-      // Esconde todos os conteúdos
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      
-      // Desativa todas as abas
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      
-      // Ativa a aba e conteúdo selecionados
-      document.getElementById(`tab-${tipo}`).classList.add('active');
-      document.querySelectorAll('.tab').forEach(tab => {
-        if (tab.textContent === tipo) tab.classList.add('active');
-      });
-    }
-
-    function criarGrafico(tipo, resultado) {
-      const ctx = document.getElementById(`chart-${tipo}`).getContext('2d');
-      
-      // Destrói o gráfico anterior se existir
-      if (ctx.chart) {
-        ctx.chart.destroy();
-      }
-      
-      const total = resultado.total || 1;
-      const dentroPercent = (resultado.dentroSLA.length / total) * 100;
-      const foraPercent = (resultado.foraSLA.length / total) * 100;
-      
-      ctx.chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Dentro do SLA', 'Fora do SLA'],
-          datasets: [{
-            data: [dentroPercent, foraPercent],
-            backgroundColor: ['#2ecc71', '#e74c3c'],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const label = context.label || '';
-                  const value = context.raw || 0;
-                  return `${label}: ${value.toFixed(1)}% (${context.label === 'Dentro do SLA' ? resultado.dentroSLA.length : resultado.foraSLA.length} tickets)`;
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function exportarResultados() {
-      if (!workbookGlobal || Object.keys(resultadosAtuais).length === 0) {
-        alert("Nenhum resultado disponível para exportar.");
-        return;
-      }
-
-      try {
-        // Cria uma nova planilha com os resultados
-        const wb = XLSX.utils.book_new();
-        
-        Object.keys(resultadosAtuais).forEach(tipo => {
-          const resultado = resultadosAtuais[tipo];
-          const dadosExport = [];
-          
-          // Cabeçalho
-          dadosExport.push(["Ticket", "Matrícula", "Abertura", "Encerramento", "Tempo (min)", "Status SLA", "Descrição"]);
-          
-          // Adiciona todos os tickets
-          [...resultado.dentroSLA, ...resultado.foraSLA].forEach(row => {
-            const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
-            const statusSLA = tempo <= 1440 ? "Dentro" : "Fora";
-            
-            dadosExport.push([
-              row[0] || '',
-              row[1] || '',
-              formatarData(row[2]),
-              formatarData(row[3]),
-              Math.round(tempo),
-              statusSLA,
-              row[4] || ''
-            ]);
-          });
-          
-          // Adiciona a aba ao workbook
-          const ws = XLSX.utils.aoa_to_sheet(dadosExport);
-          XLSX.utils.book_append_sheet(wb, ws, tipo);
-        });
-        
-        // Gera o arquivo e faz o download
-        XLSX.writeFile(wb, `Resultados_SLA_${document.getElementById("matricula").value}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        
-      } catch (error) {
-        console.error("Erro ao exportar resultados:", error);
-        alert("Ocorreu um erro ao exportar os resultados. Verifique o console para mais detalhes.");
+    function formatarTempo(minutos) {
+      if (minutos < 60) {
+        return `${Math.round(minutos)} minutos`;
+      } else if (minutos < 1440) {
+        const horas = Math.floor(minutos / 60);
+        const mins = Math.round(minutos % 60);
+        return `${horas}h ${mins}m`;
+      } else {
+        const dias = Math.floor(minutos / 1440);
+        const horas = Math.floor((minutos % 1440) / 60);
+        return `${dias}d ${horas}h`;
       }
     }
   </script>
