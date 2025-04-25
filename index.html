@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel SLA - Consulta por Matrícula</title>
+  <title>Painel SLA - ETIT Empresarial</title>
   <style>
     :root {
       --vermelho: #e60000;
@@ -198,11 +198,34 @@
       background-color: #e3f2fd;
       color: #1565c0;
     }
+    
+    .resumo {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 15px;
+      padding: 15px;
+      background: #f8f8f8;
+      border-radius: 6px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .resumo-item {
+      text-align: center;
+      padding: 10px;
+      min-width: 120px;
+    }
+    
+    .resumo-valor {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Painel de Consulta SLA - ETIT Residencial</h1>
+    <h1>Painel de Consulta SLA - ETIT Empresarial</h1>
 
     <div class="input-group">
       <div class="input-row">
@@ -229,6 +252,8 @@
     <div id="statusMsg" class="status-msg" style="display: none;"></div>
 
     <div id="resultadosContainer">
+      <div id="resumoContainer" class="resumo" style="display: none;"></div>
+      
       <div id="ticketsContainer" class="resultado-box" style="display: none;">
         <table id="ticketsTable">
           <thead>
@@ -237,6 +262,7 @@
               <th>Tipo</th>
               <th>Tempo</th>
               <th>SLA</th>
+              <th>Indicador</th>
             </tr>
           </thead>
           <tbody id="ticketsBody"></tbody>
@@ -320,13 +346,14 @@
 
           // Filtra por matrícula e processa os tickets
           todosTickets = dados
-            .filter(row => row[1] && row[1].toString().includes(matricula))
+            .filter(row => row && row.length >= 5 && row[1] && row[1].toString().includes(matricula))
             .map(row => {
               const tipo = row[0] ? (row[0].toString().startsWith("RAL") ? "RAL" : 
                                     row[0].toString().startsWith("REC") ? "REC" : "OUTRO") : "OUTRO";
               
               let tempoMinutos = 0;
               let dentroSLA = false;
+              let indicador = row[6] !== undefined ? row[6] : null;
               
               if (row[2] && row[3]) {
                 try {
@@ -346,12 +373,14 @@
                 ticket: row[0] || '',
                 tipo: tipo,
                 tempo: tempoMinutos,
-                sla: dentroSLA ? "Dentro" : "Fora"
+                sla: dentroSLA ? "Dentro" : "Fora",
+                indicador: indicador
               };
             });
 
           showStatus('Planilha carregada com sucesso!', 'success');
           processarTipo(tipo);
+          atualizarResumo();
 
         } catch (error) {
           console.error("Erro ao processar arquivo:", error);
@@ -401,10 +430,45 @@
           <td>${ticket.tipo}</td>
           <td>${formatarTempo(ticket.tempo)}</td>
           <td class="${ticket.sla === 'Dentro' ? 'sla-dentro' : 'sla-fora'}">${ticket.sla}</td>
+          <td>${ticket.indicador !== null ? ticket.indicador : '-'}</td>
         `;
         
         tbody.appendChild(tr);
       });
+    }
+
+    function atualizarResumo() {
+      const resumoContainer = document.getElementById("resumoContainer");
+      resumoContainer.style.display = "flex";
+      
+      const total = todosTickets.length;
+      const totalRAL = todosTickets.filter(t => t.tipo === 'RAL').length;
+      const totalREC = todosTickets.filter(t => t.tipo === 'REC').length;
+      const dentroSLA = todosTickets.filter(t => t.sla === 'Dentro').length;
+      const foraSLA = todosTickets.filter(t => t.sla === 'Fora').length;
+      
+      resumoContainer.innerHTML = `
+        <div class="resumo-item">
+          <div class="resumo-valor">${total}</div>
+          <div>Total Tickets</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor">${totalRAL}</div>
+          <div>Tickets RAL</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor">${totalREC}</div>
+          <div>Tickets REC</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor sla-dentro">${dentroSLA}</div>
+          <div>Dentro SLA</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor sla-fora">${foraSLA}</div>
+          <div>Fora SLA</div>
+        </div>
+      `;
     }
 
     function formatarTempo(minutos) {
