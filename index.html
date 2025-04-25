@@ -275,6 +275,18 @@
       statusDiv.style.display = 'block';
     }
 
+    function parseExcelDate(excelDate) {
+      // Se for um número (formato de data do Excel)
+      if (typeof excelDate === 'number') {
+        const date = new Date((excelDate - (25567 + 2)) * 86400 * 1000);
+        return isNaN(date.getTime()) ? null : date;
+      }
+      
+      // Se for string, tenta parsear como data
+      const date = new Date(excelDate);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
     function consultar(tipo) {
       const fileInput = document.getElementById("arquivoExcel");
       const matricula = document.getElementById("matricula").value.trim();
@@ -325,20 +337,17 @@
               const tipo = row[0] ? (row[0].toString().startsWith("RAL") ? "RAL" : 
                                     row[0].toString().startsWith("REC") ? "REC" : "OUTRO") : "OUTRO";
               
-              // Pega o tempo diretamente da coluna E (já em minutos)
+              // Calcula o tempo entre Coluna D (Fim) e Coluna C (Inicio)
               let tempoMinutos = 0;
-              if (row[4] && typeof row[4] === 'string' && row[4].startsWith('=')) {
-                // Se for fórmula, calcula a diferença entre as datas
-                try {
-                  const inicio = new Date(row[2]);
-                  const fim = new Date(row[3]);
-                  tempoMinutos = (fim - inicio) / (1000 * 60);
-                } catch (e) {
-                  console.warn("Erro ao calcular tempo:", e);
+              try {
+                const inicio = parseExcelDate(row[2]);
+                const fim = parseExcelDate(row[3]);
+                
+                if (inicio && fim) {
+                  tempoMinutos = (fim - inicio) / (1000 * 60); // Diferença em minutos
                 }
-              } else if (row[4] !== undefined && row[4] !== "") {
-                // Se já estiver calculado, usa o valor diretamente
-                tempoMinutos = parseFloat(row[4]) || 0;
+              } catch (e) {
+                console.warn("Erro ao calcular tempo:", e);
               }
               
               // Determina o SLA baseado no Indicador (coluna G)
