@@ -12,230 +12,80 @@
       padding: 20px;
       color: #333;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
     h1 {
-      color: #e60000;
-      text-align: center;
+      color: #e60000; /* vermelho Claro */
     }
-    .input-group {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    input, button {
-      padding: 10px;
+    input, button, select {
+      padding: 8px;
       margin: 5px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      width: 100%;
-      box-sizing: border-box;
     }
-    button {
-      background-color: #e60000;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #c50000;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .button-group button {
-      flex: 1;
-    }
-    .resultado-box {
+    #resultadosRal, #resultadosRec {
       background: #fff;
       padding: 15px;
+      margin-top: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
     }
-    .sla-status {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-    }
-    .sla-dentro {
-      color: #2ecc71;
-      font-weight: bold;
-    }
-    .sla-fora {
-      color: #e74c3c;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    details {
       margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    .loading {
-      display: none;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border-left-color: #e60000;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Painel de Consulta SLA - ETIT Residencial</h1>
+  <h1>Painel de Consulta SLA - ETIT Residencial</h1>
 
-    <div class="input-group">
-      <div>
-        <label for="arquivoExcel">Selecione o arquivo Excel:</label>
-        <input type="file" id="arquivoExcel" accept=".xlsx,.xls" />
-      </div>
-      <div>
-        <label for="matricula">Matrícula:</label>
-        <input type="text" id="matricula" placeholder="Digite a matrícula" />
-      </div>
-      <div class="button-group">
-        <button id="btnRal" onclick="consultar('RAL')" disabled>Consultar RAL</button>
-        <button id="btnRec" onclick="consultar('REC')" disabled>Consultar REC</button>
-      </div>
-    </div>
+  <input type="file" id="arquivoExcel" accept=".xlsx" />
+  <br />
+  <input type="text" id="matricula" placeholder="Digite a matrícula" />
+  <br />
+  <button onclick="processarArquivo()">Consultar</button>
 
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Processando arquivo...</p>
-    </div>
-
-    <div id="resultadosContainer"></div>
-  </div>
+  <div id="resultadosRal"></div>
+  <div id="resultadosRec"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
     let workbookGlobal;
-    let dadosFiltrados = [];
 
-    // Habilita/desabilita botões conforme seleção de arquivo e matrícula
-    document.getElementById('arquivoExcel').addEventListener('change', validarEntradas);
-    document.getElementById('matricula').addEventListener('input', validarEntradas);
-
-    function validarEntradas() {
-      const arquivoSelecionado = document.getElementById('arquivoExcel').files.length > 0;
-      const matriculaPreenchida = document.getElementById('matricula').value.trim() !== '';
-      
-      document.getElementById('btnRal').disabled = !(arquivoSelecionado && matriculaPreenchida);
-      document.getElementById('btnRec').disabled = !(arquivoSelecionado && matriculaPreenchida);
-    }
-
-    function consultar(tipo) {
+    function processarArquivo() {
       const fileInput = document.getElementById("arquivoExcel");
       const matricula = document.getElementById("matricula").value.trim();
 
-      if (!fileInput.files.length) {
-        alert("Selecione um arquivo para continuar.");
+      if (!fileInput.files.length || !matricula) {
+        alert("Selecione um arquivo e digite a matrícula.");
         return;
       }
 
-      if (!matricula) {
-        alert("Digite a matrícula para consultar.");
-        return;
-      }
-
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("btnRal").disabled = true;
-      document.getElementById("btnRec").disabled = true;
-
-      // Se já temos os dados filtrados, apenas filtra pelo tipo
-      if (dadosFiltrados.length > 0) {
-        processarTipo(tipo);
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("btnRal").disabled = false;
-        document.getElementById("btnRec").disabled = false;
-        return;
-      }
-
-      // Processa o arquivo pela primeira vez
       const reader = new FileReader();
       reader.onload = function (e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          workbookGlobal = workbook;
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        workbookGlobal = workbook;
 
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
-          const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          if (dados.length === 0 || dados[0].length < 5) {
-            alert("Formato de planilha inválido. Verifique se o arquivo contém todas as colunas necessárias.");
-            return;
-          }
-
-          // Filtra por matrícula
-          dadosFiltrados = dados.filter(
-            (row) => row[1] && row[1].toString().includes(matricula)
-          );
-
-          processarTipo(tipo);
-
-        } catch (error) {
-          console.error("Erro ao processar arquivo:", error);
-          alert("Ocorreu um erro ao processar o arquivo.");
-        } finally {
-          document.getElementById("loading").style.display = "none";
-          document.getElementById("btnRal").disabled = false;
-          document.getElementById("btnRec").disabled = false;
+        if (dados.length === 0 || dados[0].length < 5) {
+          alert("Formato de planilha inválido. Verifique as colunas.");
+          return;
         }
-      };
 
-      reader.onerror = function() {
-        alert("Erro ao ler o arquivo. Por favor, tente novamente.");
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("btnRal").disabled = false;
-        document.getElementById("btnRec").disabled = false;
+        const dadosFiltrados = dados.filter(
+          (row) => row[1] && row[1].toString().includes(matricula)
+        );
+
+        const ticketsRal = dadosFiltrados.filter(ticket => ticket[0].startsWith("RAL"));
+        const ticketsRec = dadosFiltrados.filter(ticket => ticket[0].startsWith("REC"));
+
+        const resultadoRal = analisarSLA(ticketsRal);
+        const resultadoRec = analisarSLA(ticketsRec);
+
+        exibirResultado("resultadosRal", "RAL", resultadoRal);
+        exibirResultado("resultadosRec", "REC", resultadoRec);
       };
 
       reader.readAsArrayBuffer(fileInput.files[0]);
-    }
-
-    function processarTipo(tipo) {
-      const tickets = dadosFiltrados.filter(ticket => 
-        ticket[0] && ticket[0].toString().startsWith(tipo)
-      );
-
-      const resultado = analisarSLA(tickets);
-      exibirResultado(tipo, resultado);
     }
 
     function analisarSLA(listaTickets) {
@@ -243,155 +93,31 @@
       const foraSLA = [];
 
       listaTickets.forEach((row) => {
-        try {
-          if (!row[2] || !row[3]) return; // Ignora se não tem datas de abertura/encerramento
-          
-          const abertura = new Date(row[2]);
-          const encerramento = new Date(row[3]);
-          
-          if (isNaN(abertura.getTime()) || isNaN(encerramento.getTime())) {
-            console.warn("Data inválida no ticket:", row);
-            return;
-          }
-          
-          const tempo = (encerramento - abertura) / (1000 * 60); // minutos
-          
-          if (tempo <= 1440) { // 24 horas em minutos
-            dentroSLA.push(row);
-          } else {
-            foraSLA.push(row);
-          }
-        } catch (error) {
-          console.warn("Erro ao analisar ticket:", row, error);
+        const abertura = new Date(row[2]);
+        const encerramento = new Date(row[3]);
+        const tempo = (encerramento - abertura) / (1000 * 60); // minutos
+
+        if (tempo <= 1440) {
+          dentroSLA.push(row);
+        } else {
+          foraSLA.push(row);
         }
       });
 
-      return { 
-        dentroSLA, 
-        foraSLA,
-        total: listaTickets.length
-      };
+      return { dentroSLA, foraSLA };
     }
 
-    function exibirResultado(tipo, resultado) {
-      const container = document.getElementById("resultadosContainer");
-      
-      // Remove resultados anteriores do mesmo tipo
-      const oldResult = document.getElementById(`resultado-${tipo}`);
-      if (oldResult) {
-        oldResult.remove();
-      }
-      
-      const resultadoBox = document.createElement('div');
-      resultadoBox.className = 'resultado-box';
-      resultadoBox.id = `resultado-${tipo}`;
-      
-      resultadoBox.innerHTML = `
+    function exibirResultado(containerId, tipo, resultado) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
         <h2>Tickets ${tipo}</h2>
-        <div class="sla-status">
-          <div>
-            <span class="sla-dentro">Dentro do SLA: ${resultado.dentroSLA.length}</span>
-            <span> (${resultado.total > 0 ? Math.round((resultado.dentroSLA.length / resultado.total) * 100) : 0}%)</span>
-          </div>
-          <div>
-            <span class="sla-fora">Fora do SLA: ${resultado.foraSLA.length}</span>
-            <span> (${resultado.total > 0 ? Math.round((resultado.foraSLA.length / resultado.total) * 100) : 0}%)</span>
-          </div>
-        </div>
-        
+        <p><strong>Dentro do SLA:</strong> ${resultado.dentroSLA.length}</p>
+        <p><strong>Fora do SLA:</strong> ${resultado.foraSLA.length}</p>
         <details>
-          <summary>Ver detalhes dos tickets fora do SLA (${resultado.foraSLA.length})</summary>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Matrícula</th>
-                  <th>Abertura</th>
-                  <th>Encerramento</th>
-                  <th>Tempo</th>
-                  <th>Descrição</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${resultado.foraSLA.map(row => `
-                  <tr>
-                    <td>${row[0] || ''}</td>
-                    <td>${row[1] || ''}</td>
-                    <td>${formatarData(row[2])}</td>
-                    <td>${formatarData(row[3])}</td>
-                    <td>${formatarTempo((new Date(row[3]) - new Date(row[2])) / (1000 * 60))}</td>
-                    <td>${row[4] || ''}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </details>
-        
-        <details>
-          <summary>Ver todos os tickets (${resultado.total})</summary>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Matrícula</th>
-                  <th>Abertura</th>
-                  <th>Encerramento</th>
-                  <th>Tempo</th>
-                  <th>SLA</th>
-                  <th>Descrição</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${[...resultado.dentroSLA, ...resultado.foraSLA].map(row => {
-                  const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
-                  const dentroSLA = tempo <= 1440;
-                  return `
-                    <tr>
-                      <td>${row[0] || ''}</td>
-                      <td>${row[1] || ''}</td>
-                      <td>${formatarData(row[2])}</td>
-                      <td>${formatarData(row[3])}</td>
-                      <td>${formatarTempo(tempo)}</td>
-                      <td class="${dentroSLA ? 'sla-dentro' : 'sla-fora'}">${dentroSLA ? 'Dentro' : 'Fora'}</td>
-                      <td>${row[4] || ''}</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
+          <summary>Ver detalhes dos fora do SLA</summary>
+          <pre>${resultado.foraSLA.map(r => r.join(" | ")).join("\n")}</pre>
         </details>
       `;
-      
-      container.appendChild(resultadoBox);
-    }
-
-    function formatarData(dataString) {
-      if (!dataString) return '';
-      try {
-        const date = new Date(dataString);
-        if (isNaN(date.getTime())) return dataString;
-        return date.toLocaleString('pt-BR');
-      } catch {
-        return dataString;
-      }
-    }
-
-    function formatarTempo(minutos) {
-      if (minutos < 60) {
-        return `${Math.round(minutos)} minutos`;
-      } else if (minutos < 1440) {
-        const horas = Math.floor(minutos / 60);
-        const mins = Math.round(minutos % 60);
-        return `${horas}h ${mins}m`;
-      } else {
-        const dias = Math.floor(minutos / 1440);
-        const horas = Math.floor((minutos % 1440) / 60);
-        return `${dias}d ${horas}h`;
-      }
     }
   </script>
 </body>
