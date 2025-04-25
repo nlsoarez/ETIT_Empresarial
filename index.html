@@ -14,6 +14,7 @@
       --cinza-medio: #e0e0e0;
       --cinza-texto: #555;
       --branco: #ffffff;
+      --azul: #3498db;
     }
     
     body {
@@ -104,6 +105,15 @@
     
     .btn-secondary:hover {
       background-color: #d0d0d0;
+    }
+    
+    .btn-export {
+      background-color: var(--azul);
+      color: white;
+    }
+    
+    .btn-export:hover {
+      background-color: #2980b9;
     }
     
     button:disabled {
@@ -198,6 +208,51 @@
       background-color: #e3f2fd;
       color: #1565c0;
     }
+    
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      flex: 1;
+      min-width: 200px;
+      background: var(--branco);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--cinza-medio);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .stat-title {
+      font-size: 14px;
+      color: var(--cinza-texto);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .stat-detail {
+      font-size: 12px;
+      color: var(--cinza-texto);
+      margin-top: 5px;
+    }
+    
+    @media (max-width: 768px) {
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .stats-container {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -218,6 +273,7 @@
         <button id="btnConsultar" class="btn-primary" onclick="consultar('TODOS')">Consultar Todos</button>
         <button id="btnRal" class="btn-secondary" onclick="consultar('RAL')" disabled>Consultar RAL</button>
         <button id="btnRec" class="btn-secondary" onclick="consultar('REC')" disabled>Consultar REC</button>
+        <button id="btnExportar" class="btn-export" onclick="exportarParaExcel()" disabled>Exportar para Excel</button>
       </div>
     </div>
 
@@ -229,6 +285,8 @@
     <div id="statusMsg" class="status-msg" style="display: none;"></div>
 
     <div id="resultadosContainer">
+      <div id="statsContainer" class="stats-container" style="display: none;"></div>
+      
       <div id="ticketsContainer" class="resultado-box" style="display: none;">
         <table id="ticketsTable">
           <thead>
@@ -249,6 +307,7 @@
   <script>
     let todosTickets = [];
     let ticketsFiltrados = [];
+    let matriculaAtual = '';
 
     // Habilita/desabilita botões conforme seleção de arquivo e matrícula
     document.getElementById('arquivoExcel').addEventListener('change', validarEntradas);
@@ -261,6 +320,7 @@
       document.getElementById('btnConsultar').disabled = !(arquivoSelecionado && matriculaPreenchida);
       document.getElementById('btnRal').disabled = !(arquivoSelecionado && matriculaPreenchida);
       document.getElementById('btnRec').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      document.getElementById('btnExportar').disabled = todosTickets.length === 0;
       
       // Se já tem dados carregados, mostra mensagem
       if (todosTickets.length > 0 && arquivoSelecionado && matriculaPreenchida) {
@@ -305,16 +365,18 @@
       document.getElementById("btnConsultar").disabled = true;
       document.getElementById("btnRal").disabled = true;
       document.getElementById("btnRec").disabled = true;
+      document.getElementById("btnExportar").disabled = true;
 
-      // Se já temos os dados carregados, apenas filtra
-      if (todosTickets.length > 0) {
+      // Se já temos os dados carregados e a matrícula não mudou, apenas filtra
+      if (todosTickets.length > 0 && matricula === matriculaAtual) {
         processarTipo(tipo);
         document.getElementById("loading").style.display = "none";
         validarEntradas();
         return;
       }
 
-      // Processa o arquivo pela primeira vez
+      // Processa o arquivo pela primeira vez ou com nova matrícula
+      matriculaAtual = matricula;
       const reader = new FileReader();
       reader.onload = function (e) {
         try {
@@ -368,9 +430,10 @@
 
         } catch (error) {
           console.error("Erro ao processar arquivo:", error);
-          alert("Ocorreu um erro ao processar o arquivo.");
+          alert("Ocorreu um erro ao processar o arquivo. Verifique o formato.");
         } finally {
           document.getElementById("loading").style.display = "none";
+          document.getElementById("btnExportar").disabled = todosTickets.length === 0;
           validarEntradas();
         }
       };
@@ -392,6 +455,7 @@
       }
       
       atualizarTabela();
+      atualizarEstatisticas();
     }
 
     function atualizarTabela() {
@@ -400,6 +464,7 @@
 
       if (ticketsFiltrados.length === 0) {
         document.getElementById("ticketsContainer").style.display = "none";
+        document.getElementById("statsContainer").style.display = "none";
         showStatus('Nenhum ticket encontrado para os critérios selecionados.', 'info');
         return;
       }
@@ -418,6 +483,117 @@
         
         tbody.appendChild(tr);
       });
+    }
+
+    function atualizarEstatisticas() {
+      const statsContainer = document.getElementById("statsContainer");
+      statsContainer.innerHTML = '';
+      
+      if (ticketsFiltrados.length === 0) {
+        statsContainer.style.display = "none";
+        return;
+      }
+      
+      statsContainer.style.display = "flex";
+      
+      // Calcula estatísticas
+      const totalTickets = ticketsFiltrados.length;
+      const dentroSLA = ticketsFiltrados.filter(t => t.sla === 'Dentro').length;
+      const foraSLA = totalTickets - dentroSLA;
+      const percentualDentro = totalTickets > 0 ? Math.round((dentroSLA / totalTickets) * 100) : 0;
+      
+      // Tempo médio
+      const tempoMedioDentro = dentroSLA > 0 ? 
+        Math.round(ticketsFiltrados.filter(t => t.sla === 'Dentro').reduce((sum, t) => sum + t.tempo, 0) / dentroSLA) : 0;
+      
+      const tempoMedioFora = foraSLA > 0 ? 
+        Math.round(ticketsFiltrados.filter(t => t.sla === 'Fora').reduce((sum, t) => sum + t.tempo, 0) / foraSLA) : 0;
+      
+      // Cria os cards de estatísticas
+      statsContainer.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-title">Total de Tickets</div>
+          <div class="stat-value">${totalTickets}</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-title">Dentro do SLA</div>
+          <div class="stat-value sla-dentro">${dentroSLA}</div>
+          <div class="stat-detail">${percentualDentro}% do total</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-title">Fora do SLA</div>
+          <div class="stat-value sla-fora">${foraSLA}</div>
+          <div class="stat-detail">${100 - percentualDentro}% do total</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-title">Tempo Médio (Dentro)</div>
+          <div class="stat-value">${tempoMedioDentro} min</div>
+          <div class="stat-detail">Baseado em ${dentroSLA} tickets</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-title">Tempo Médio (Fora)</div>
+          <div class="stat-value">${tempoMedioFora} min</div>
+          <div class="stat-detail">Baseado em ${foraSLA} tickets</div>
+        </div>
+      `;
+    }
+
+    function exportarParaExcel() {
+      if (ticketsFiltrados.length === 0) {
+        alert("Nenhum dado para exportar.");
+        return;
+      }
+      
+      try {
+        // Cria uma nova planilha
+        const wb = XLSX.utils.book_new();
+        
+        // Prepara os dados para exportação
+        const dadosExportacao = ticketsFiltrados.map(ticket => ({
+          'Ticket': ticket.ticket,
+          'Tipo': ticket.tipo,
+          'Tempo (min)': Math.round(ticket.tempo),
+          'SLA': ticket.sla
+        }));
+        
+        // Adiciona estatísticas como uma segunda aba
+        const dentroSLA = ticketsFiltrados.filter(t => t.sla === 'Dentro').length;
+        const foraSLA = ticketsFiltrados.length - dentroSLA;
+        const tempoMedioDentro = dentroSLA > 0 ? 
+          Math.round(ticketsFiltrados.filter(t => t.sla === 'Dentro').reduce((sum, t) => sum + t.tempo, 0) / dentroSLA) : 0;
+        const tempoMedioFora = foraSLA > 0 ? 
+          Math.round(ticketsFiltrados.filter(t => t.sla === 'Fora').reduce((sum, t) => sum + t.tempo, 0) / foraSLA) : 0;
+        
+        const estatisticas = [
+          ['Estatísticas', 'Valor'],
+          ['Total de Tickets', ticketsFiltrados.length],
+          ['Tickets Dentro do SLA', dentroSLA],
+          ['Tickets Fora do SLA', foraSLA],
+          ['Tempo Médio Dentro do SLA (min)', tempoMedioDentro],
+          ['Tempo Médio Fora do SLA (min)', tempoMedioFora]
+        ];
+        
+        // Cria as planilhas
+        const wsDados = XLSX.utils.json_to_sheet(dadosExportacao);
+        const wsStats = XLSX.utils.aoa_to_sheet(estatisticas);
+        
+        // Adiciona as planilhas ao workbook
+        XLSX.utils.book_append_sheet(wb, wsDados, "Tickets");
+        XLSX.utils.book_append_sheet(wb, wsStats, "Estatísticas");
+        
+        // Gera o arquivo Excel
+        const nomeArquivo = `SLA_${matriculaAtual}_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, nomeArquivo);
+        
+        showStatus('Dados exportados com sucesso!', 'success');
+      } catch (error) {
+        console.error("Erro ao exportar:", error);
+        alert("Ocorreu um erro ao exportar os dados.");
+      }
     }
   </script>
 </body>
