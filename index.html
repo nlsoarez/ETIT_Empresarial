@@ -13,12 +13,13 @@
       color: #333;
     }
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
     }
     h1 {
       color: #e60000;
       text-align: center;
+      margin-bottom: 20px;
     }
     .input-group {
       background: #fff;
@@ -27,9 +28,9 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    input, button {
+    input, button, select {
       padding: 10px;
-      margin: 5px 0;
+      margin: 8px 0;
       border: 1px solid #ddd;
       border-radius: 4px;
       width: 100%;
@@ -64,6 +65,7 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       margin-bottom: 20px;
+      overflow-x: auto;
     }
     .sla-dentro {
       color: #2ecc71;
@@ -76,15 +78,21 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 15px;
+      font-size: 14px;
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: left;
     }
     th {
       background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover {
+      background-color: #f0f0f0;
     }
     .loading {
       display: none;
@@ -104,6 +112,32 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .filtros {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .filtro-item {
+      flex: 1;
+      min-width: 200px;
+    }
+    .resumo {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8f8f8;
+      border-radius: 4px;
+    }
+    .resumo-item {
+      text-align: center;
+      flex: 1;
+    }
+    .resumo-valor {
+      font-size: 18px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -119,10 +153,7 @@
         <label for="matricula">Matrícula:</label>
         <input type="text" id="matricula" placeholder="Digite a matrícula" />
       </div>
-      <div class="button-group">
-        <button id="btnRal" onclick="consultar('RAL')" disabled>Consultar RAL</button>
-        <button id="btnRec" onclick="consultar('REC')" disabled>Consultar REC</button>
-      </div>
+      <button id="btnConsultar" onclick="consultar()">Consultar Todos os Tickets</button>
     </div>
 
     <div id="loading" class="loading">
@@ -130,15 +161,53 @@
       <p>Processando arquivo...</p>
     </div>
 
-    <div id="resultadosContainer"></div>
+    <div id="resultadosContainer">
+      <div id="filtrosContainer" class="filtros" style="display: none;">
+        <div class="filtro-item">
+          <label for="filtroTipo">Filtrar por Tipo:</label>
+          <select id="filtroTipo" onchange="filtrarTickets()">
+            <option value="todos">Todos</option>
+            <option value="RAL">RAL</option>
+            <option value="REC">REC</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <label for="filtroSLA">Filtrar por SLA:</label>
+          <select id="filtroSLA" onchange="filtrarTickets()">
+            <option value="todos">Todos</option>
+            <option value="dentro">Dentro do SLA</option>
+            <option value="fora">Fora do SLA</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="resumoContainer" class="resumo" style="display: none;"></div>
+
+      <div id="ticketsContainer" class="resultado-box" style="display: none;">
+        <table id="ticketsTable">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Tipo</th>
+              <th>Tempo</th>
+              <th>SLA</th>
+              <th>Matrícula</th>
+              <th>Abertura</th>
+              <th>Encerramento</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
-    let workbookGlobal;
-    let dadosFiltrados = [];
+    let todosTickets = [];
+    let ticketsFiltrados = [];
 
-    // Habilita/desabilita botões conforme seleção de arquivo e matrícula
+    // Habilita/desabilita botão conforme seleção de arquivo e matrícula
     document.getElementById('arquivoExcel').addEventListener('change', validarEntradas);
     document.getElementById('matricula').addEventListener('input', validarEntradas);
 
@@ -146,11 +215,10 @@
       const arquivoSelecionado = document.getElementById('arquivoExcel').files.length > 0;
       const matriculaPreenchida = document.getElementById('matricula').value.trim() !== '';
       
-      document.getElementById('btnRal').disabled = !(arquivoSelecionado && matriculaPreenchida);
-      document.getElementById('btnRec').disabled = !(arquivoSelecionado && matriculaPreenchida);
+      document.getElementById('btnConsultar').disabled = !(arquivoSelecionado && matriculaPreenchida);
     }
 
-    function consultar(tipo) {
+    function consultar() {
       const fileInput = document.getElementById("arquivoExcel");
       const matricula = document.getElementById("matricula").value.trim();
 
@@ -165,25 +233,13 @@
       }
 
       document.getElementById("loading").style.display = "block";
-      document.getElementById("btnRal").disabled = true;
-      document.getElementById("btnRec").disabled = true;
+      document.getElementById("btnConsultar").disabled = true;
 
-      // Se já temos os dados filtrados, apenas filtra pelo tipo
-      if (dadosFiltrados.length > 0) {
-        processarTipo(tipo);
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("btnRal").disabled = false;
-        document.getElementById("btnRec").disabled = false;
-        return;
-      }
-
-      // Processa o arquivo pela primeira vez
       const reader = new FileReader();
       reader.onload = function (e) {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: "array" });
-          workbookGlobal = workbook;
 
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
@@ -194,131 +250,166 @@
             return;
           }
 
-          // Filtra por matrícula
-          dadosFiltrados = dados.filter(
-            (row) => row[1] && row[1].toString().includes(matricula)
-          );
+          // Filtra por matrícula e processa os tickets
+          todosTickets = dados
+            .filter(row => row[1] && row[1].toString().includes(matricula))
+            .map(row => {
+              const tipo = row[0] ? (row[0].toString().startsWith("RAL") ? "RAL" : 
+                                    row[0].toString().startsWith("REC") ? "REC" : "OUTRO") : "OUTRO";
+              
+              let tempoMinutos = 0;
+              let dentroSLA = false;
+              
+              if (row[2] && row[3]) {
+                try {
+                  const abertura = new Date(row[2]);
+                  const encerramento = new Date(row[3]);
+                  
+                  if (!isNaN(abertura.getTime()) && !isNaN(encerramento.getTime())) {
+                    tempoMinutos = (encerramento - abertura) / (1000 * 60);
+                    dentroSLA = tempoMinutos <= 1440; // 24 horas em minutos
+                  }
+                } catch (e) {
+                  console.warn("Erro ao processar datas do ticket:", row, e);
+                }
+              }
+              
+              return {
+                ticket: row[0] || '',
+                tipo: tipo,
+                tempo: tempoMinutos,
+                sla: dentroSLA ? "Dentro" : "Fora",
+                matricula: row[1] || '',
+                abertura: row[2] || '',
+                encerramento: row[3] || '',
+                descricao: row[4] || ''
+              };
+            });
 
-          processarTipo(tipo);
+          // Mostra os controles de filtro
+          document.getElementById("filtrosContainer").style.display = "flex";
+          document.getElementById("ticketsContainer").style.display = "block";
+          
+          // Exibe todos os tickets inicialmente
+          ticketsFiltrados = [...todosTickets];
+          atualizarTabela();
+          atualizarResumo();
 
         } catch (error) {
           console.error("Erro ao processar arquivo:", error);
           alert("Ocorreu um erro ao processar o arquivo.");
         } finally {
           document.getElementById("loading").style.display = "none";
-          document.getElementById("btnRal").disabled = false;
-          document.getElementById("btnRec").disabled = false;
+          document.getElementById("btnConsultar").disabled = false;
         }
       };
 
       reader.onerror = function() {
         alert("Erro ao ler o arquivo. Por favor, tente novamente.");
         document.getElementById("loading").style.display = "none";
-        document.getElementById("btnRal").disabled = false;
-        document.getElementById("btnRec").disabled = false;
+        document.getElementById("btnConsultar").disabled = false;
       };
 
       reader.readAsArrayBuffer(fileInput.files[0]);
     }
 
-    function processarTipo(tipo) {
-      const tickets = dadosFiltrados.filter(ticket => 
-        ticket[0] && ticket[0].toString().startsWith(tipo)
-      );
+    function filtrarTickets() {
+      const tipo = document.getElementById("filtroTipo").value;
+      const sla = document.getElementById("filtroSLA").value;
 
-      const resultado = analisarSLA(tickets);
-      exibirResultado(tipo, resultado);
-    }
-
-    function analisarSLA(listaTickets) {
-      const dentroSLA = [];
-      const foraSLA = [];
-
-      listaTickets.forEach((row) => {
-        try {
-          if (!row[2] || !row[3]) return; // Ignora se não tem datas de abertura/encerramento
-          
-          const abertura = new Date(row[2]);
-          const encerramento = new Date(row[3]);
-          
-          if (isNaN(abertura.getTime()) || isNaN(encerramento.getTime())) {
-            console.warn("Data inválida no ticket:", row);
-            return;
-          }
-          
-          const tempo = (encerramento - abertura) / (1000 * 60); // minutos
-          
-          if (tempo <= 1440) { // 24 horas em minutos
-            dentroSLA.push(row);
-          } else {
-            foraSLA.push(row);
-          }
-        } catch (error) {
-          console.warn("Erro ao analisar ticket:", row, error);
+      ticketsFiltrados = todosTickets.filter(ticket => {
+        // Filtro por tipo
+        if (tipo !== 'todos' && ticket.tipo !== tipo) return false;
+        
+        // Filtro por SLA
+        if (sla !== 'todos') {
+          if (sla === 'dentro' && ticket.sla !== 'Dentro') return false;
+          if (sla === 'fora' && ticket.sla !== 'Fora') return false;
         }
+        
+        return true;
       });
 
-      return { 
-        dentroSLA, 
-        foraSLA,
-        total: listaTickets.length
-      };
+      atualizarTabela();
     }
 
-    function exibirResultado(tipo, resultado) {
-      const container = document.getElementById("resultadosContainer");
+    function atualizarTabela() {
+      const tbody = document.getElementById("ticketsBody");
+      tbody.innerHTML = '';
+
+      ticketsFiltrados.forEach(ticket => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>${ticket.ticket}</td>
+          <td>${ticket.tipo}</td>
+          <td>${formatarTempo(ticket.tempo)}</td>
+          <td class="${ticket.sla === 'Dentro' ? 'sla-dentro' : 'sla-fora'}">${ticket.sla}</td>
+          <td>${ticket.matricula}</td>
+          <td>${formatarData(ticket.abertura)}</td>
+          <td>${formatarData(ticket.encerramento)}</td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+    }
+
+    function atualizarResumo() {
+      const resumoContainer = document.getElementById("resumoContainer");
+      resumoContainer.style.display = "flex";
       
-      // Remove resultados anteriores do mesmo tipo
-      const oldResult = document.getElementById(`resultado-${tipo}`);
-      if (oldResult) {
-        oldResult.remove();
-      }
+      const total = todosTickets.length;
+      const totalRAL = todosTickets.filter(t => t.tipo === 'RAL').length;
+      const totalREC = todosTickets.filter(t => t.tipo === 'REC').length;
+      const dentroSLA = todosTickets.filter(t => t.sla === 'Dentro').length;
+      const foraSLA = todosTickets.filter(t => t.sla === 'Fora').length;
       
-      const resultadoBox = document.createElement('div');
-      resultadoBox.className = 'resultado-box';
-      resultadoBox.id = `resultado-${tipo}`;
-      
-      resultadoBox.innerHTML = `
-        <h2>Tickets ${tipo}</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Ticket</th>
-              <th>Tempo</th>
-              <th>SLA</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${[...resultado.dentroSLA, ...resultado.foraSLA].map(row => {
-              const tempo = (new Date(row[3]) - new Date(row[2])) / (1000 * 60);
-              const dentroSLA = tempo <= 1440;
-              return `
-                <tr>
-                  <td>${row[0] || ''}</td>
-                  <td>${formatarTempo(tempo)}</td>
-                  <td class="${dentroSLA ? 'sla-dentro' : 'sla-fora'}">${dentroSLA ? 'Dentro' : 'Fora'}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+      resumoContainer.innerHTML = `
+        <div class="resumo-item">
+          <div class="resumo-valor">${total}</div>
+          <div>Total de Tickets</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor">${totalRAL}</div>
+          <div>Tickets RAL</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor">${totalREC}</div>
+          <div>Tickets REC</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor sla-dentro">${dentroSLA}</div>
+          <div>Dentro do SLA</div>
+        </div>
+        <div class="resumo-item">
+          <div class="resumo-valor sla-fora">${foraSLA}</div>
+          <div>Fora do SLA</div>
+        </div>
       `;
-      
-      container.appendChild(resultadoBox);
+    }
+
+    function formatarData(dataString) {
+      if (!dataString) return '';
+      try {
+        const date = new Date(dataString);
+        if (isNaN(date.getTime())) return dataString;
+        return date.toLocaleString('pt-BR');
+      } catch {
+        return dataString;
+      }
     }
 
     function formatarTempo(minutos) {
-      if (minutos < 60) {
-        return `${Math.round(minutos)} minutos`;
-      } else if (minutos < 1440) {
+      if (minutos < 1) return '0 min';
+      if (minutos < 60) return `${Math.round(minutos)} min`;
+      if (minutos < 1440) {
         const horas = Math.floor(minutos / 60);
         const mins = Math.round(minutos % 60);
         return `${horas}h ${mins}m`;
-      } else {
-        const dias = Math.floor(minutos / 1440);
-        const horas = Math.floor((minutos % 1440) / 60);
-        return `${dias}d ${horas}h`;
       }
+      const dias = Math.floor(minutos / 1440);
+      const horas = Math.floor((minutos % 1440) / 60);
+      return `${dias}d ${horas}h`;
     }
   </script>
 </body>
