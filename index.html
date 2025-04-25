@@ -311,7 +311,7 @@
 
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const dados = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          const dados = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
           if (dados.length === 0 || dados[0].length < 5) {
             alert("Formato de planilha inválido. Verifique se o arquivo contém todas as colunas necessárias.");
@@ -326,12 +326,25 @@
                                     row[0].toString().startsWith("REC") ? "REC" : "OUTRO") : "OUTRO";
               
               // Pega o tempo diretamente da coluna E (já em minutos)
-              let tempoMinutos = row[4] ? parseFloat(row[4]) : 0;
+              let tempoMinutos = 0;
+              if (row[4] && typeof row[4] === 'string' && row[4].startsWith('=')) {
+                // Se for fórmula, calcula a diferença entre as datas
+                try {
+                  const inicio = new Date(row[2]);
+                  const fim = new Date(row[3]);
+                  tempoMinutos = (fim - inicio) / (1000 * 60);
+                } catch (e) {
+                  console.warn("Erro ao calcular tempo:", e);
+                }
+              } else if (row[4] !== undefined && row[4] !== "") {
+                // Se já estiver calculado, usa o valor diretamente
+                tempoMinutos = parseFloat(row[4]) || 0;
+              }
               
               // Determina o SLA baseado no Indicador (coluna G)
               // Volume = 1 e Indicador = 1 → Dentro do SLA
               // Volume = 1 e Indicador = 0 → Fora do SLA
-              const dentroSLA = row[6] === 1; // Indicador = 1 (Dentro), 0 (Fora)
+              const dentroSLA = row[6] === 1 || row[6] === "1"; // Indicador = 1 (Dentro), 0 (Fora)
               
               return {
                 ticket: row[0] || '',
